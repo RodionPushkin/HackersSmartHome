@@ -1,0 +1,71 @@
+@font-face {
+    font-family: Gravity;
+    font-weight: 250;
+    src: local("Gravity"), url("@/assets/fonts/Gravity-UltraLight.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Gravity;
+    font-weight: 300;
+    src: local("Gravity"), url("@/assets/fonts/Gravity-Light.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Gravity;
+    font-weight: 350;
+    src: local("Gravity"), url("@/assets/fonts/Gravity-Book.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Gravity;
+    font-weight: 400;
+    src: local("Gravity"), url("@/assets/fonts/Gravity-Regular.otf") format("opentype");
+}
+
+@font-face {
+    font-family: Gravity;
+    font-weight: 700;
+    src: local("Gravity"), url("@/assets/fonts/Gravity-Bold.otf") format("opentype");
+}
+
+:root {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    font-family: Gravity, Inter, Avenir, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    --main-color: #00A8C1;
+    --main-light-color: #007E91;
+    --main-darken-color: #00788A;
+    --accent-color: #BFE9EF;
+    --accent-light-color: #8FAFB3;
+    --accent-darken-color: #85B7BE;
+    --border-radius: 4px;
+    color: var(--font-color);
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-color: #FBFDFE;
+        --bg-light-color: #F0F0F0;
+        --bg-darken-color: #EFEFEF;
+        --font-color: #001520;
+        --font-light-color: #001018;
+        --font-darken-color: #3F4F58;
+    }
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --font-color: #FBFDFE;
+        --font-light-color: #BCBEBE;
+        --font-darken-color: #EFEFEF;
+        --bg-color: #001520;
+        --bg-light-color: #001018;
+        --bg-darken-color: #3F4F58;
+    }
+}

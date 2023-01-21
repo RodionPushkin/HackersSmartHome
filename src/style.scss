@@ -1,0 +1,130 @@
+.container {
+  width: 100%;
+  max-width: 1344px;
+  padding: 0 72px;
+  margin: 0 auto;
+  @media screen and (max-width: 768px) {
+    padding: 0 24px;
+  }
+}
+
+.s {
+  font-weight: 400;
+  font-size: 20px;
+  @media screen and (max-width: 768px) {
+    font-size: 18px;
+  }
+}
+
+.m {
+  font-weight: 500;
+  font-size: 32px;
+  @media screen and (max-width: 768px) {
+    font-size: 24px;
+  }
+}
+
+.l {
+  font-weight: 600;
+  font-size: 40px;
+  @media screen and (max-width: 768px) {
+    font-size: 28px;
+  }
+}
+
+.input {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column-reverse;
+  margin-top: 28px;
+
+  label {
+    color: var(--font-color);
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    transition: top 0.2s;
+    pointer-events: none;
+    font-size: 14px;
+    user-select: none;
+  }
+
+  input:focus ~ label {
+    top: -22px;
+    font-size: 12px;
+    transform: translateY(0%);
+  }
+
+  input:not(:placeholder-shown) ~ label {
+    top: -22px;
+    font-size: 12px;
+    transform: translateY(0%);
+  }
+}
+
+.input-checkbox {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  label:first-of-type {
+    display: inline-flex;
+    padding: 2px;
+    height: 20px;
+    width: 40px;
+    background: #EFEFEF;
+    border-radius: 20px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    user-select: none;
+    @media screen and (max-width: 768px) {
+      padding: 4px;
+      height: 30px;
+      width: 60px;
+    }
+
+    &:before {
+      content: '';
+      height: 16px;
+      aspect-ratio: 1/1;
+      background: #3F4F58;
+      margin-left: 0px;
+      transition: margin-left 0.3s;
+      border-radius: 20px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.03);
+      cursor: pointer;
+      user-select: none;
+      @media screen and (max-width: 768px) {
+        height: 22px;
+        aspect-ratio: 1/1;
+      }
+    }
+  }
+
+  input {
+    display: none;
+  }
+
+  input:checked ~ label:first-of-type {
+    &:before {
+      background: var(--main-color);
+      margin-left: 20px;
+      @media screen and (max-width: 768px){
+        margin-left: 30px;
+      }
+    }
+  }
+
+  label:last-of-type {
+    cursor: pointer;
+    user-select: none;
+    @media screen and (max-width: 768px){
+      font-size: 16px;
+    }
+  }
+}
+
+.noselect {
+  user-select: none;
+}
