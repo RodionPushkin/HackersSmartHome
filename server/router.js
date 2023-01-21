@@ -306,4 +306,7 @@ module.exports = router => {
     //
     // })
   })
+  router.get(`/api/data`, [corsAllMiddleware], async (req, res) => {
+    res.json(color)
+  })
 }

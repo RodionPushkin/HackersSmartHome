@@ -4,7 +4,6 @@
   "email_pass": "",
   "email_port": 465,
   "email_smtp": "",
-  "PORT": 80,
   "DOMAIN": "http://127.0.0.1:80",
   "DB_HOST": "localhost",
   "DB_DATABASE": "postgres",
