@@ -64,6 +64,15 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(helmet());
 app.use(compression())
+require('./router')(app)
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
+app.use("/api/static",express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, 'dist')));
+app.use(history({
+  index: '/index.html'
+}));
+app.use(express.static(path.join(__dirname, 'dist')));
+app.use(errorMiddleware)
 let server;
 let peer
 if (process.env.NODE_ENV == 'production') {
@@ -127,20 +136,17 @@ if (process.env.NODE_ENV == 'production') {
 app.use('/', peer);
 require('./peer')(peer)
 global.peer = peer
-require('./router')(app)
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
-app.use("/api/static",express.static(path.join(__dirname, 'static')));
-app.use(express.static(path.join(__dirname, 'dist')));
-app.use(history({
-  index: '/index.html'
-}));
-app.use(express.static(path.join(__dirname, 'dist')));
-app.use(errorMiddleware)
 try {
   server.listen(port, () => {
     console.log(`Server started on: ${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
     db.checkConnection()
   });
+  if(process.env.NODE_ENV == 'production'){
+    httpserver = http.createServer(app);
+    httpserver.listen(port, () => {
+      console.log(`http server started on: ${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
+    });
+  }
 } catch (e) {
   console.log(e)
 }
