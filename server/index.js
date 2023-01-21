@@ -77,7 +77,7 @@ let server;
 let peer
 // process.env.NODE_ENV = 'production'
 //process.env.NODE_ENV == 'production'
-console.log(process.env.NODE_ENV)
+console.log("process", process.env.NODE_ENV)
 if (process.env.NODE_ENV == 'production') {
   app.enable('trust proxy')
   // app.use(httpsRedirect())
@@ -140,13 +140,14 @@ app.use('/', peer);
 require('./peer')(peer)
 global.peer = peer
 try {
+  console.log("port",port)
   server.listen(port, () => {
-    console.log(`Server started on: ${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
+    console.log(`Server started on: http${port == 443 ? 's' : ''}://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
     db.checkConnection()
     if(process.env.NODE_ENV == 'production'){
       httpserver = http.createServer(app);
       httpserver.listen(80, () => {
-        console.log(`http server started on: ${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
+        console.log(`http server started on: http://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
       });
     }
   });
