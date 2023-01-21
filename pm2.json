@@ -1,6 +1,6 @@
 {
   "apps" : [{
-    "name": "app",
+    "name": "HackersSmartHome",
     "script": "server/index.js",
     "watch": true,
     "env": {
