@@ -36,25 +36,25 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    meta: {title: 'главная'},
-    // beforeEnter: authGuard,
+    meta: {title: 'Hackers 54 - главная'},
+    beforeEnter: authGuard,
     component: () => import('../views/home/index.vue')
   },
-  // {
-  //   path: '/auth',
-  //   name: 'auth',
-  //   meta: {title: 'авторизация'},
-  //   beforeEnter: authGuard,
-  //   component: () => import('../views/auth/index.vue')
-  // },
-  // {
-  //   path: '/registration',
-  //   name: 'registration',
-  //   meta: {title: 'регистрация'},
-  //   beforeEnter: authGuard,
-  //   component: () => import('../views/registration/index.vue')
-  // },
-  {path: '/:pathMatch(.*)*', meta: {title: 'ошибка 404'}, component: () => import('../views/404/index.vue')}
+  {
+    path: '/auth',
+    name: 'auth',
+    meta: {title: 'Hackers 54 - авторизация'},
+    beforeEnter: authGuard,
+    component: () => import('../views/auth/index.vue')
+  },
+  {
+    path: '/registration',
+    name: 'registration',
+    meta: {title: 'Hackers 54 - регистрация'},
+    beforeEnter: authGuard,
+    component: () => import('../views/registration/index.vue')
+  },
+  {path: '/:pathMatch(.*)*', meta: {title: 'Hackers 54 - ошибка 404'}, component: () => import('../views/404/index.vue')}
 ]
 
 const router = createRouter({

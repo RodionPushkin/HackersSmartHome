@@ -30,12 +30,12 @@ export default {
             throw "logout"
           }else{
             localStorage.setItem('token',res.access_token)
-            this.$peer._options.token = localStorage.getItem('token')
-            this.$peer.disconnect()
-            this.$peer.reconnect()
+            // this.$peer._options.token = localStorage.getItem('token')
+            // this.$peer.disconnect()
+            // this.$peer.reconnect()
           }
         }).catch(err=>{
-          this.$peer.destroy()
+          // this.$peer.destroy()
           localStorage.removeItem('token')
           this.$router.push('/auth')
         })

@@ -6,7 +6,7 @@
   "email_smtp": "",
   "DOMAIN": "127.0.0.1",
   "DB_HOST": "localhost",
-  "DB_DATABASE": "postgres",
+  "DB_DATABASE": "HackersSmartHomeDB",
   "DB_USER": "postgres",
   "DB_PASS": "root",
   "DB_PORT": 5432,

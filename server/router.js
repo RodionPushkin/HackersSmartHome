@@ -12,12 +12,6 @@ const uuid = require('uuid')
 const geoip = require('geoip-lite')
 const path = require('path')
 const fs = require('fs')
-let color = {
-  r: 0,
-  g: 164,
-  b: 192,
-  a: 255
-}
 module.exports = router => {
   /**
    * @swagger
@@ -194,7 +188,10 @@ module.exports = router => {
    *           '200':
    *               description: возвращает access_token,refresh_token и user
    * */
-  router.put(`/api/user`, [corsAllMiddleware, authNotMiddleware, body('email').isEmail(), body('password').isLength({min: 6, max: 32})], async (req, res, next) => {
+  router.put(`/api/user`, [corsAllMiddleware, authNotMiddleware, body('email').isEmail(), body('password').isLength({
+    min: 6,
+    max: 32
+  })], async (req, res, next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) throw ApiException.BadRequest('Не корректные данные!', errors.array())
@@ -256,7 +253,6 @@ module.exports = router => {
    * */
   router.get(`/api/user`, [corsAllMiddleware, authMiddleware], async (req, res, next) => {
     try {
-      global.peer.emit('huy')
       let access_token = req.query.access_token || req.body.access_token || req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined
       let refresh_token = req.query.refresh_token || req.body.refresh_token || req.cookies.refresh_token
       if (!access_token && !refresh_token) throw ApiException.Unauthorized()
@@ -271,42 +267,235 @@ module.exports = router => {
       next(e)
     }
   })
-  router.post(`/api/upload`, [corsMiddleware], async (req, res) => {
-    // console.log(req.files.file);
-    let newFileName = `${new Date().getTime()}.csv`
-    console.log(path.join(__dirname, "/python/", `${newFileName}`))
-    req.files.file.mv(path.join(__dirname, "/python/", `${newFileName}`), () => {
-    })
-    setTimeout(() => {
-      res.json('ok')
-    }, 20000)
+  /**
+   * @swagger
+   * /api/user/device:
+   *   get:
+   *       description: Получение пользовательских девайсов
+   *       parameters:
+   *         - name: deviceId
+   *           required: true
+   *           type: string
+   *       responses:
+   *           '200':
+   *               description: если установлен deviceID возвращает ok
+   * */
+  router.get('/api/user/device', [corsAllMiddleware, authMiddleware], async (req, res, next) => {
+    try {
+      let access_token = req.query.access_token || req.body.access_token || req.headers.authorization ? req.headers.authorization.split(' ')[1] : undefined
+      let refresh_token = req.query.refresh_token || req.body.refresh_token || req.cookies.refresh_token
+      if (!access_token && !refresh_token) throw ApiException.Unauthorized()
+      let user = await db.query(`SELECT "U".* FROM "user" AS "U" INNER JOIN "token" AS "T" ON "U"."id" = "T"."id_user" WHERE "T"."access_token" = '${access_token}' AND "T"."refresh_token" = '${refresh_token}'`).then(res => res.rows[0])
+      let devices = await db.query(`SELECT * FROM "user_device" AS "UD" INNER JOIN "device" AS "D" ON "UD"."device" = "D"."id"`).then(res => res.rows)
+      let deviceTypes = await db.query(`SELECT * FROM "device_type"`).then(res => res.rows)
+      for (let i = 0; i < devices.length; i++) {
+        db.query(`SELECT * FROM "device_group" WHERE "device" = ${devices[i].id}`).then(res => {
+          devices[i].group = res.rows.map(group=>group.title)
+        })
+      }
+      devices.map(device => {
+        delete (device.device)
+        delete (device.user)
+        // delete (device.key)
+        device.device_type = deviceTypes.find(type => type.id == device.device_type)
+      })
+      setTimeout(()=>{
+        res.json({
+          devices: devices,
+          device_type: deviceTypes
+        })
+      },50)
+    } catch (e) {
+      next(e)
+    }
+  })
+  /**
+   * @swagger
+   * /api/user/device:
+   *   put:
+   *       description: Изменение пользовательских девайсов
+   *       parameters:
+   *         - name: deviceId
+   *           required: true
+   *           type: string
+   *       responses:
+   *           '200':
+   *               description: если установлен deviceID возвращает ok
+   * */
+  router.put('/api/user/device', [corsAllMiddleware, authMiddleware], async (req, res, next) => {
 
   })
-  router.get(`/api/python`, [corsAllMiddleware], async (req, res) => {
-    let data = await libService.ExecutePython('test', JSON.stringify({"data": "python is working"}))
-    if (data == "error of execution") {
-      res.json(data)
-    } else {
-      res.json(JSON.parse(data.replaceAll("'", '"')))
+  /**
+   * @swagger
+   * /api/user/device:
+   *   post:
+   *       description: Добавление пользовательских девайсов
+   *       parameters:
+   *         - name: deviceId
+   *           required: true
+   *           type: string
+   *       responses:
+   *           '200':
+   *               description: если установлен deviceID возвращает ok
+   * */
+  router.post('/api/user/device', [corsAllMiddleware, authMiddleware], async (req, res, next) => {
+
+  })
+  /**
+   * @swagger
+   * /api/device/registration:
+   *   get:
+   *       description: Регистрация девайса при первом
+   *       parameters:
+   *         - name: deviceId
+   *           required: true
+   *           type: string
+   *       responses:
+   *           '200':
+   *               description: если установлен deviceID возвращает ok
+   * */
+  router.get('/api/device/registration', [corsAllMiddleware, authNotMiddleware], async (req, res, next) => {
+    console.log(req.query)
+    try {
+      if (req.query.deviceId) {
+        let device = await db.query(`SELECT * FROM "device" WHERE "key" = '${req.query.deviceId}'`).then(res => res.rows[0])
+        if (device){
+          res.send("ok")
+          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 5*60*1000} / 1000.0) WHERE id = ${device.id}`)
+        }else throw ApiException.BadRequest('Не корректные данные!')
+      } else throw ApiException.BadRequest('Не корректные данные!')
+    } catch (e) {
+      next(e)
     }
   })
-  router.get(`/api/color`, [corsAllMiddleware], async (req, res) => {
-    if(req.query.rgba){
-      color = {
-        r:req.query.rgba.split(',')[0],
-        g:req.query.rgba.split(',')[1],
-        b:req.query.rgba.split(',')[2],
-        a:req.query.rgba.split(',')[3]
-      }
+  /**
+   * @swagger
+   * /api/device/authorization:
+   *   get:
+   *       description: Авторизация девайса при запуске
+   *       parameters:
+   *         - name: deviceId
+   *           required: true
+   *           type: string
+   *       responses:
+   *           '200':
+   *               description: если установлен deviceID возвращает ok
+   * */
+  router.get('/api/device/authorization', [corsAllMiddleware, authNotMiddleware], async (req, res, next) => {
+    console.log(req.query)
+    try {
+      if (req.query.deviceId) {
+        let device = await db.query(`SELECT * FROM "device" WHERE "key" = '${req.query.deviceId}'`).then(res => res.rows[0])
+        if (device){
+          res.send("ok")
+          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 5*60*1000} / 1000.0) WHERE id = ${device.id}`)
+        }else throw ApiException.BadRequest('Не корректные данные!')
+      } else throw ApiException.BadRequest('Не корректные данные!')
+    } catch (e) {
+      next(e)
     }
-    res.json(color)
-    // console.log(path.join(__dirname, "/static/", `data.json`))
-    // fs.writeFile(path.join(__dirname, "/static/", `data.json`),JSON.stringify(data),(err)=>{
-    //   if (err) return console.log(err);
-    //
-    // })
   })
-  router.get(`/api/data`, [corsAllMiddleware], async (req, res) => {
-    res.json(color)
+  /**
+   * @swagger
+   * /api/device/values:
+   *   get:
+   *       description: Работа с данными девайса
+   *       parameters:
+   *         - name: deviceId
+   *           required: true
+   *           type: string
+   *         - name: value
+   *           required: false
+   *           type: string
+   *         - name: color
+   *           required: false
+   *           type: string
+   *       responses:
+   *           '200':
+   *               description: если установлен только deviceID возвращает массив значений, установка value нужна для получения конкретных значений, установка color меняет переменную
+   * */
+  router.get('/api/device/values', [corsAllMiddleware, authNotMiddleware], async (req, res, next) => {
+    console.log(req.query)
+    try {
+      if (req.query.deviceId) {
+        let device = await db.query(`SELECT * FROM "device" WHERE "key" = '${req.query.deviceId.toLowerCase()}'`).then(res => res.rows[0])
+        if (device) {
+          let values = await db.query(`SELECT * FROM "device_value" WHERE "device" = '${device.id}'`).then(res => res.rows)
+          values.map(value => {
+            switch (value.title){
+              case 'color': {
+                value.value = {
+                  r: Number(value.value.split(',')[0]),
+                  g: Number(value.value.split(',')[1]),
+                  b: Number(value.value.split(',')[2]),
+                  a: Number(value.value.split(',')[3]),
+                }
+                if(values.filter(value2 => value2.title == 'effect').length > 0 && values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0] != -1){
+                  delete(value.value.r)
+                  delete(value.value.g)
+                  delete(value.value.b)
+                  delete(value.value.a)
+                  value.value.effect = Number(values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0])
+                  value.value.a = Number(values.filter(value2 => value2.title == 'effect')[0].value.split(',')[1])
+                }
+                break;
+              }
+            }
+            return value
+          })
+          if (req.query.value) {
+            switch (req.query.value) {
+              case 'color': {
+                values.filter(value => {
+                  if (value.title == 'color') {
+                    res.json(value.value)
+                  } else {
+                    return false
+                  }
+                })
+                break;
+              }
+            }
+          }
+          else if (req.query.color) {
+            let color = {
+              r: Number(req.query.color.split(',')[0]),
+              g: Number(req.query.color.split(',')[1]),
+              b: Number(req.query.color.split(',')[2]),
+              a: Number(req.query.color.split(',')[3]),
+            }
+            if (values.filter(value => value.title == 'color').length > 0) {
+              await db.query(`UPDATE "device_value" SET "value" = '${color.r},${color.g},${color.b},${color.a}' WHERE id = ${values.filter(value=>value.title == 'color')[0].id}`)
+              res.json(color)
+              if (values.filter(value => value.title == 'effect').length > 0) {
+                await db.query(`UPDATE "device_value" SET "value" = '-1,0' WHERE id = ${values.filter(value=>value.title == 'effect')[0].id}`)
+              }
+            } else throw ApiException.BadRequest('Не корректные данные!')
+          }
+          else if (req.query.effect) {
+            let color = {
+              effect: Number(req.query.effect.split(',')[0]),
+              a: Number(req.query.effect.split(',')[1]),
+            }
+            if (values.filter(value => value.title == 'effect').length > 0) {
+              await db.query(`UPDATE "device_value" SET "value" = '${color.effect},${color.a}' WHERE id = ${values.filter(value=>value.title == 'effect')[0].id}`)
+              res.json(color)
+            } else throw ApiException.BadRequest('Не корректные данные!')
+          }
+          else {
+            values.map(value => {
+              delete (value.id)
+              delete (value.type)
+              delete (value.device)
+              return value
+            })
+            res.json(values)
+          }
+          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 5*60*1000} / 1000.0) WHERE id = ${device.id}`)
+        } else throw ApiException.BadRequest('Не корректные данные!')
+      } else throw ApiException.BadRequest('Не корректные данные!')
+    } catch (e) {
+      next(e)
+    }
   })
 }
