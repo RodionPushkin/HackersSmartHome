@@ -28,8 +28,10 @@
           <i v-if="device.online" class="online"></i>
           <i v-else class="offline"></i>
           <div class="color" v-if="device.device_type.id == 7">
-<!--            {{device?.values}}-->
-            <input v-if="device?.values?.find(item=>item.title == 'color')" @change="changeLight($event)" type="color" :value="rgbToHex(device?.values?.find(item=>item.title == 'color').value.r,device?.values?.find(item=>item.title == 'color').value.g,device?.values?.find(item=>item.title == 'color').value.b)">
+            <div v-if="device?.values?.find(item=>item.title == 'color')" :style="`background: ${rgbToHex(device?.values?.find(item=>item.title == 'color').value.r,device?.values?.find(item=>item.title == 'color').value.g,device?.values?.find(item=>item.title == 'color').value.b)}`"></div>
+            <input v-if="device?.values?.find(item=>item.title == 'color')"
+                   @change="changeLight($event,device)" type="color"
+                   :value="rgbToHex(device?.values?.find(item=>item.title == 'color').value.r,device?.values?.find(item=>item.title == 'color').value.g,device?.values?.find(item=>item.title == 'color').value.b)">
           </div>
           <p class="temp" v-if="device.device_type.id == 3">Температура: {{device?.values?.find(item=>item.title == 'temp').value.temp}} °C</p>
           <p class="hud" v-if="device.device_type.id == 3">Влажность: {{device?.values?.find(item=>item.title == 'temp').value.hud}}%</p>
@@ -125,7 +127,7 @@ export default {
       };
     },
     rgbToHex(r, g, b) {
-      return "#" + r.toString(16) + g.toString(16) + b.toString(16);
+      return `#${r.toString(16).length == 1 ? "0"+r.toString(16) : r.toString(16)}${g.toString(16).length == 1 ? "0"+g.toString(16) : g.toString(16)}${b.toString(16).length == 1 ? "0"+b.toString(16) : b.toString(16)}`;
     },
     vibrate(value) {
       let navigator = window.navigator
@@ -203,8 +205,14 @@ export default {
         })
       }
     },
-    changeLight(event){
-      console.log(event.target.value)
+    changeLight(event,device){
+      if(event.target.value && device){
+        console.log(this.hexToRgb(event.target.value),device.key)
+        let color = this.hexToRgb(event.target.value)
+        this.$api.get(`device/values?deviceId=${device.key}&color=${color.r},${color.g},${color.b},255`).then(()=>{
+          this.loadData()
+        })
+      }
     },
     touchDrag(){
 
@@ -312,12 +320,23 @@ export default {
         left: 0;
         width: 100%;
         height: 100%;
+        >div{
+          position: absolute;
+          width: 45%;
+          aspect-ratio: 1/1;
+          filter: blur(40px);
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%,-50%);
+          transition: background 0.3s;
+        }
         input{
           width: 100%;
           height: 100%;
           padding: 0;
           margin: 0;
           min-width: 0;
+          opacity: 0;
         }
       }
       canvas{
