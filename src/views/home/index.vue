@@ -33,9 +33,9 @@
                    @change="changeLight($event,device)" type="color"
                    :value="rgbToHex(device?.values?.find(item=>item.title == 'color').value.r,device?.values?.find(item=>item.title == 'color').value.g,device?.values?.find(item=>item.title == 'color').value.b)">
           </div>
-          <p class="temp" v-if="device.device_type.id == 3">Температура: {{device?.values?.find(item=>item.title == 'temp').value.temp}} °C</p>
+          <p class="temp" v-if="device.device_type.id == 3">Влажность: {{device?.values?.find(item=>item.title == 'temp').value.hud}}%</p>
           <p class="temp-big" v-if="device.device_type.id == 3">{{device?.values?.find(item=>item.title == 'temp').value.temp}} <span>°C</span></p>
-          <p class="hud" v-if="device.device_type.id == 3">Влажность: {{device?.values?.find(item=>item.title == 'temp').value.hud}}%</p>
+<!--          <p class="hud" v-if="device.device_type.id == 3">Влажность: </p>-->
           <span>{{ device.title }}</span>
           <canvas :id="'deviceCanvas'+index"></canvas>
       </div>
@@ -315,10 +315,8 @@ export default {
         &:hover {
         }
       }
-      .temp{
-        pointer-events: none;
-      }
-      .hud{
+      .temp,.hud{
+        font-size: 12px;
         pointer-events: none;
       }
       .temp-big{

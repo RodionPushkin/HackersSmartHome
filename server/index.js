@@ -62,7 +62,9 @@ app.use(session({
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
 app.use(compression())
 require('./router')(app)
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
