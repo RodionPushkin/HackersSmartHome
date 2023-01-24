@@ -1,56 +1,49 @@
 <template>
   <div class="container">
-    <h1 class="m" >Умный дом</h1>
+    <header>
+      <h1 class="m">Умный дом</h1>
+      <div class="settings">
+        <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M262.29 192.31C249.159 191.013 235.948 193.807 224.466 200.308C212.983 206.81 203.791 216.701 198.148 228.629C192.505 240.556 190.686 253.937 192.941 266.937C195.196 279.938 201.415 291.925 210.745 301.255C220.075 310.585 232.062 316.804 245.063 319.059C258.064 321.314 271.444 319.495 283.371 313.852C295.299 308.209 305.19 299.017 311.692 287.534C318.193 276.052 320.987 262.841 319.69 249.71C318.212 234.99 311.689 221.233 301.228 210.772C290.767 200.311 277.01 193.788 262.29 192.31ZM416.39 256C416.349 262.957 415.838 269.902 414.86 276.79L460.07 312.25C462.039 313.882 463.365 316.159 463.814 318.676C464.262 321.194 463.804 323.789 462.52 326L419.75 400C418.451 402.19 416.421 403.851 414.017 404.691C411.613 405.531 408.99 405.495 406.61 404.59L361.71 386.51C359.234 385.524 356.552 385.168 353.905 385.473C351.257 385.779 348.727 386.736 346.54 388.26C339.688 392.979 332.487 397.171 325 400.8C322.646 401.944 320.61 403.65 319.072 405.767C317.534 407.884 316.541 410.348 316.18 412.94L309.45 460.83C309.008 463.359 307.701 465.656 305.753 467.329C303.805 469.001 301.337 469.946 298.77 470H213.23C210.705 469.956 208.271 469.054 206.328 467.442C204.385 465.829 203.049 463.603 202.54 461.13L195.82 413.31C195.443 410.689 194.424 408.203 192.854 406.071C191.283 403.939 189.211 402.228 186.82 401.09C179.342 397.48 172.166 393.277 165.36 388.52C163.181 387.004 160.659 386.054 158.021 385.755C155.383 385.457 152.713 385.819 150.25 386.81L105.36 404.88C102.981 405.786 100.359 405.823 97.9551 404.985C95.5514 404.148 93.5205 402.488 92.2201 400.3L49.4501 326.3C48.1642 324.089 47.7047 321.494 48.1533 318.976C48.602 316.458 49.9297 314.181 51.9001 312.55L90.1101 282.55C92.2034 280.888 93.8487 278.73 94.8964 276.271C95.9442 273.812 96.3614 271.131 96.1101 268.47C95.7501 264.3 95.5301 260.14 95.5301 255.97C95.5301 251.8 95.7401 247.7 96.1101 243.62C96.3339 240.975 95.8963 238.316 94.8367 235.883C93.777 233.449 92.1287 231.318 90.0401 229.68L51.8501 199.68C49.9117 198.041 48.6119 195.772 48.1786 193.271C47.7453 190.77 48.206 188.196 49.4801 186L92.2501 112C93.5489 109.81 95.5792 108.149 97.9831 107.309C100.387 106.469 103.01 106.505 105.39 107.41L150.29 125.49C152.766 126.476 155.448 126.832 158.096 126.527C160.743 126.221 163.274 125.264 165.46 123.74C172.313 119.021 179.513 114.829 187 111.2C189.354 110.056 191.39 108.35 192.928 106.233C194.466 104.116 195.459 101.652 195.82 99.06L202.55 51.17C202.992 48.6408 204.299 46.3436 206.247 44.6711C208.195 42.9985 210.663 42.0544 213.23 42H298.77C301.295 42.0437 303.729 42.946 305.672 44.5583C307.615 46.1707 308.951 48.3968 309.46 50.87L316.18 98.69C316.557 101.311 317.576 103.797 319.147 105.929C320.717 108.061 322.789 109.772 325.18 110.91C332.658 114.52 339.834 118.723 346.64 123.48C348.819 124.996 351.341 125.946 353.979 126.245C356.617 126.543 359.287 126.181 361.75 125.19L406.64 107.12C409.019 106.214 411.641 106.177 414.045 107.015C416.449 107.852 418.48 109.512 419.78 111.7L462.55 185.7C463.836 187.911 464.295 190.506 463.847 193.024C463.398 195.542 462.07 197.819 460.1 199.45L421.89 229.45C419.788 231.106 418.133 233.262 417.076 235.721C416.019 238.18 415.595 240.865 415.84 243.53C416.17 247.67 416.39 251.83 416.39 256Z" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </header>
     <div class="groups">
-      <span v-for="(group,index) in groups" :key="index">{{ group }}</span>
+      <span v-for="(group,index) in groups" :key="index" :class="{active: selectedGroup == group}" @click="selectedGroup = group">{{ group }}</span>
     </div>
+<!--    <div contenteditable="true" style="white-space: pre;">{{devices[0]}}</div>-->
     <div class="devices">
-      <div class="device" v-for="(device,index) in devices">
-        <i v-if="device.online" class="online"></i>
-        <i v-else class="offline"></i>
-        <span>{{ device.title }}</span>
+      <div class="device"
+           v-for="(device,index) in devices"
+           :key="index"
+           @click="({target})=>animate(target,120)">
+<!--          @mousedown="startDrag($event,device)"-->
+<!--          @mouseup="stopDrag($event,device)"-->
+<!--          @mousemove="moveDrag($event,device)"-->
+<!--          @mouseleave="stopDrag($event,device)"-->
+<!--        @touchStart="startDrag($event,device)"-->
+<!--        @touchEnd="stopDrag($event,device)"-->
+<!--        @touchCancel="stopDrag($event,device)"-->
+<!--        @touchMove="moveDrag($event,device)"-->
+          <i v-if="device.online" class="online"></i>
+          <i v-else class="offline"></i>
+          <div class="color" v-if="device.device_type.id == 7">
+<!--            {{device?.values}}-->
+            <input v-if="device?.values?.find(item=>item.title == 'color')" @change="changeLight($event)" type="color" :value="rgbToHex(device?.values?.find(item=>item.title == 'color').value.r,device?.values?.find(item=>item.title == 'color').value.g,device?.values?.find(item=>item.title == 'color').value.b)">
+          </div>
+          <p class="temp" v-if="device.device_type.id == 3">Температура: {{device?.values?.find(item=>item.title == 'temp').value.temp}} °C</p>
+          <p class="hud" v-if="device.device_type.id == 3">Влажность: {{device?.values?.find(item=>item.title == 'temp').value.hud}}%</p>
+          <span>{{ device.title }}</span>
+          <canvas :id="'deviceCanvas'+index"></canvas>
       </div>
     </div>
-    <!--    <div id="p5Canvas"></div>-->
-    <!--    <h1 class="l noselect">Умный дом от Hackers 54</h1>-->
-    <!--    <div class="cards">-->
-    <!--      <button @click="vibrate(150)">я вибрирую</button>-->
-    <!--      <div class="card" @click="changeLight(!this.sun)">-->
-    <!--        <h2>Лампочка</h2>-->
-    <!--        <svg v-if="sun" viewBox="0 0 513 513" fill="none" xmlns="http://www.w3.org/2000/svg">-->
-    <!--          <path-->
-    <!--            d="M256.595 48.7625V96.7625M256.595 416.763V464.763M403.675 109.683L369.735 143.623M143.455 369.903L109.515 403.842M464.595 256.763H416.595M96.5952 256.763H48.5952M403.675 403.842L369.735 369.903M143.455 143.623L109.515 109.683"-->
-    <!--            stroke="currentColor" stroke-width="32" stroke-miterlimit="10" stroke-linecap="round"/>-->
-    <!--          <path-->
-    <!--            d="M256.595 336.763C300.778 336.763 336.595 300.945 336.595 256.763C336.595 212.58 300.778 176.763 256.595 176.763C212.412 176.763 176.595 212.58 176.595 256.763C176.595 300.945 212.412 336.763 256.595 336.763Z"-->
-    <!--            stroke="currentColor" stroke-width="32" stroke-miterlimit="10" stroke-linecap="round"/>-->
-    <!--        </svg>-->
-    <!--        <svg v-else viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">-->
-    <!--          <path-->
-    <!--            d="M256 118C250.165 118 244.569 115.682 240.444 111.556C236.318 107.431 234 101.835 234 96V48C234 42.1652 236.318 36.5694 240.444 32.4436C244.569 28.3178 250.165 26 256 26C261.835 26 267.431 28.3178 271.556 32.4436C275.682 36.5694 278 42.1652 278 48V96C278 101.835 275.682 107.431 271.556 111.556C267.431 115.682 261.835 118 256 118ZM256 486C250.165 486 244.569 483.682 240.444 479.556C236.318 475.431 234 469.835 234 464V416C234 410.165 236.318 404.569 240.444 400.444C244.569 396.318 250.165 394 256 394C261.835 394 267.431 396.318 271.556 400.444C275.682 404.569 278 410.165 278 416V464C278 469.835 275.682 475.431 271.556 479.556C267.431 483.682 261.835 486 256 486ZM369.14 164.86C364.79 164.859 360.537 163.569 356.92 161.152C353.303 158.736 350.484 155.301 348.819 151.282C347.153 147.263 346.717 142.841 347.564 138.574C348.412 134.307 350.505 130.387 353.58 127.31L387.52 93.37C391.664 89.3339 397.231 87.0923 403.015 87.1304C408.799 87.1684 414.336 89.4832 418.426 93.5735C422.517 97.6638 424.832 103.201 424.87 108.985C424.908 114.769 422.666 120.336 418.63 124.48L384.69 158.42C382.65 160.465 380.226 162.086 377.557 163.191C374.889 164.296 372.028 164.863 369.14 164.86ZM108.92 425.08C104.569 425.079 100.315 423.789 96.6974 421.37C93.0797 418.952 90.2603 415.516 88.5958 411.495C86.9314 407.475 86.4965 403.051 87.3463 398.784C88.1961 394.516 90.2924 390.596 93.37 387.52L127.31 353.58C129.343 351.493 131.77 349.83 134.45 348.689C137.131 347.547 140.012 346.95 142.925 346.931C145.838 346.911 148.727 347.471 151.422 348.577C154.117 349.683 156.566 351.314 158.626 353.374C160.686 355.434 162.317 357.883 163.423 360.578C164.529 363.273 165.089 366.162 165.069 369.075C165.05 371.988 164.453 374.869 163.311 377.549C162.17 380.23 160.507 382.657 158.42 384.69L124.48 418.63C122.439 420.677 120.014 422.301 117.344 423.408C114.673 424.515 111.811 425.083 108.92 425.08ZM464 278H416C410.165 278 404.569 275.682 400.444 271.556C396.318 267.431 394 261.835 394 256C394 250.165 396.318 244.569 400.444 240.444C404.569 236.318 410.165 234 416 234H464C469.835 234 475.431 236.318 479.556 240.444C483.682 244.569 486 250.165 486 256C486 261.835 483.682 267.431 479.556 271.556C475.431 275.682 469.835 278 464 278ZM96 278H48C42.1652 278 36.5694 275.682 32.4436 271.556C28.3178 267.431 26 261.835 26 256C26 250.165 28.3178 244.569 32.4436 240.444C36.5694 236.318 42.1652 234 48 234H96C101.835 234 107.431 236.318 111.556 240.444C115.682 244.569 118 250.165 118 256C118 261.835 115.682 267.431 111.556 271.556C107.431 275.682 101.835 278 96 278ZM403.08 425.08C400.189 425.083 397.327 424.515 394.656 423.408C391.986 422.301 389.561 420.677 387.52 418.63L353.58 384.69C349.544 380.546 347.302 374.979 347.34 369.195C347.378 363.411 349.693 357.874 353.784 353.784C357.874 349.693 363.411 347.378 369.195 347.34C374.979 347.302 380.546 349.544 384.69 353.58L418.63 387.52C421.708 390.596 423.804 394.516 424.654 398.784C425.503 403.051 425.069 407.475 423.404 411.495C421.74 415.516 418.92 418.952 415.303 421.37C411.685 423.789 407.431 425.079 403.08 425.08ZM142.86 164.86C139.971 164.866 137.11 164.3 134.441 163.194C131.772 162.089 129.349 160.466 127.31 158.42L93.37 124.48C89.3339 120.336 87.0923 114.769 87.1304 108.985C87.1684 103.201 89.4832 97.6638 93.5735 93.5735C97.6638 89.4832 103.201 87.1684 108.985 87.1304C114.769 87.0923 120.336 89.3339 124.48 93.37L158.42 127.31C161.495 130.387 163.588 134.307 164.436 138.574C165.283 142.841 164.847 147.263 163.181 151.282C161.516 155.301 158.697 158.736 155.08 161.152C151.463 163.569 147.21 164.859 142.86 164.86ZM256 358C235.826 358 216.106 352.018 199.332 340.81C182.558 329.602 169.484 313.672 161.764 295.034C154.044 276.396 152.024 255.887 155.96 236.101C159.896 216.315 169.61 198.14 183.875 183.875C198.14 169.61 216.315 159.896 236.101 155.96C255.887 152.024 276.396 154.044 295.034 161.764C313.672 169.484 329.602 182.558 340.81 199.332C352.018 216.106 358 235.826 358 256C357.968 283.042 347.212 308.968 328.09 328.09C308.968 347.212 283.042 357.968 256 358Z"-->
-    <!--            fill="currentColor"/>-->
-    <!--        </svg>-->
-    <!--        &lt;!&ndash;        <div class="input-checkbox">&ndash;&gt;-->
-    <!--        &lt;!&ndash;          <input id="checkbox" type="checkbox">&ndash;&gt;-->
-    <!--        &lt;!&ndash;          <label for="checkbox"></label>&ndash;&gt;-->
-    <!--        &lt;!&ndash;        </div>&ndash;&gt;-->
-    <!--      </div>-->
-    <!--      <div class="card">-->
-    <!--        <input type="color" ref="color" @change="changeLight(true)">-->
-    <!--      </div>-->
-    <!--      <div class="card">-->
-    <!--        <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">-->
-    <!--          <path d="M256 112V400M400 256H112" stroke="currentColor" stroke-width="32" stroke-linecap="round"-->
-    <!--                stroke-linejoin="round"/>-->
-    <!--        </svg>-->
-    <!--      </div>-->
-    <!--    </div>-->
   </div>
 </template>
 <script>
-// import {gsap} from 'gsap'
+import gsap from "gsap";
 import {TweenMax} from "gsap";
 import P5 from "p5";
+import { isProxy, toRaw } from 'vue';
 
 export default {
   name: "home",
@@ -58,7 +51,16 @@ export default {
     return {
       devices: [],
       device_type: [],
-      groups: []
+      groups: [],
+      selectedGroup: 'все',
+      dragInterval: undefined,
+      isDragging: false,
+      dragEl: undefined
+    }
+  },
+  watch: {
+    selectedGroup(val){
+      this.loadData()
     }
   },
   mounted() {
@@ -72,10 +74,22 @@ export default {
     //   //   p5.circle(100,100,100)
     //   // }
     // })
+    this.loadData()
+    this.groups.push('все')
     setInterval(()=>{
+      this.loadData()
+    },10000)
+    if (window.navigator && window.navigator.vibrate) {
+      console.log("поддерживается")
+    } else {
+      console.log("не поддерживается")
+    }
+  },
+  methods: {
+    loadData(){
       this.$api.get('user/device').then(res => {
-        this.devices = res.devices
-        this.devices.forEach(device => {
+        let localDevices = res.devices
+        localDevices.forEach(device => {
           device.online = new Date(device.online.replace(' ', 'T')).getTime() > new Date().getTime()
           device.group.forEach(group => {
             if (!this.groups.find(item => item == group)) {
@@ -84,19 +98,24 @@ export default {
           })
         })
         this.device_type = res.device_type
+        localDevices = localDevices.filter(device => this.selectedGroup == 'все' ? true : device.group.includes(this.selectedGroup))
+        localDevices = localDevices.sort((a, b) => {
+          if (a.index < b.index) return -1;
+          if (a.index > b.index) return 1;
+          return 0;
+        })
+        if(JSON.stringify(this.devices) != JSON.stringify(localDevices)){
+          this.devices = localDevices
+          for (let i = 0; i < this.devices.length; i++) {
+            this.devices[i].index = i
+            this.$api.get(`device/values?deviceId=${this.devices[i].key}`).then(res=>{
+              this.devices[i].values = res
+            })
+          }
+          console.log(localDevices)
+        }
       })
-    },1000)
-    // fetch(`/api/color`).then(res => res.json()).then((result) => {
-    //   this.$refs.color.value = this.rgbToHex(Number(result.r),Number(result.g),Number(result.b))
-    //   this.sun = result.a > 0 ? true : false
-    // })
-    if (window.navigator && window.navigator.vibrate) {
-      console.log("поддерживается")
-    } else {
-      console.log("не поддерживается")
-    }
-  },
-  methods: {
+    },
     hexToRgb(hex) {
       hex = hex.replace('#', '').match(/.{1,2}/g)
       return {
@@ -108,16 +127,6 @@ export default {
     rgbToHex(r, g, b) {
       return "#" + r.toString(16) + g.toString(16) + b.toString(16);
     },
-    // changeLight(sun) {
-    //   let color = this.hexToRgb(this.$refs.color.value)
-    //   // console.log(color,this.$refs.color.value)
-    //   this.vibrate(35)
-    //   fetch(`/api/color?rgba=${color.r},${color.g},${color.b},${this.sun ? 255 : 0}`).then(() => {
-    //     setTimeout(() => {
-    //       this.sun = sun
-    //     }, 50)
-    //   })
-    // },
     vibrate(value) {
       let navigator = window.navigator
       if ("vibrate" in navigator) {
@@ -129,8 +138,76 @@ export default {
       } else if ("webkitVibrate" in navigator) {
         navigator.webkitVibrate(value)
       }
-      TweenMax.to(document.body, 0.05, {x: `${Math.random() * (10) - 5}`, yoyo: true, repeat: 1})
-      TweenMax.to(document.body, 0.05, {y: `${Math.random() * (10) - 5}`, yoyo: true, repeat: 1})
+    },
+    animate(el = document.body, vibration = 0){
+      this.vibrate(vibration)
+      TweenMax.to(el, 0.03, {
+        x: `${Math.random()>0.5}${Math.random()*10}`,
+        y: `${Math.random()>0.5}${Math.random()*10}`,
+        rotation: `2`,
+        yoyo: true,
+        repeat: 1
+      })
+    },
+    startDrag(event,device){
+      console.log(event,device)
+      this.isDragging = true
+      this.animate(event.target,100)
+      // event.target.style.opacity=0
+      // event.dataTransfer.dropEffect = "move"
+      // event.dataTransfer.effectAllowed = "move"
+      // event.dataTransfer.setData('item',device.index)
+      this.dragEl = event.target
+      this.dragInterval = setInterval(()=>{
+        this.animate(event.target)
+      },320)
+    },
+    stopDrag(event,device){
+      this.isDragging = false
+      clearInterval(this.dragInterval)
+      gsap.set(this.dragEl, {
+        css: {
+          transform: 'none',
+          top: 'auto',
+          left: 'auto',
+        }
+      })
+      // event.target.style.opacity=1
+    },
+    moveDrag(event,device){
+      if(this.isDragging){
+        console.log(2,event)
+        gsap.set(this.dragEl, {
+          css: {
+            left: event.clientX - this.dragEl.offsetWidth / 2,
+            top: event.clientY - this.dragEl.offsetHeight / 2
+          }
+        })
+      }
+    },
+    onDrop(event,index){
+      index = index.index
+      const dragIndex = Number(event.dataTransfer.getData('item'))
+      if(index != dragIndex){
+        let dropItem = this.devices.find(item => item.index == index)
+        let dragItem = this.devices.find(item => item.index == dragIndex)
+        this.devices.splice(this.devices.findIndex(item=> item == dragItem),1)
+        this.devices.splice(this.devices.findIndex(item=> item == dropItem),1)
+        dropItem.index = dragIndex
+        dragItem.index = index
+        this.devices.push(dragItem,dropItem)
+        this.devices = this.devices.sort((a, b) => {
+          if (a.index < b.index) return -1;
+          if (a.index > b.index) return 1;
+          return 0;
+        })
+      }
+    },
+    changeLight(event){
+      console.log(event.target.value)
+    },
+    touchDrag(){
+
     }
   }
 }
@@ -139,21 +216,53 @@ export default {
 <style lang="scss" scoped>
 .container {
   padding-top: 48px;
+  padding-bottom: 48px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 24px;
-
+  header{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    h1{
+      user-select: none;
+    }
+    .settings{
+      height: 36px;
+      aspect-ratio: 1/1;
+      cursor: pointer;
+      border-radius: var(--border-radius);
+      @media screen and (min-width: 768px) {
+        &:hover svg{
+          transform: rotate(180deg);
+        }
+      }
+      svg{
+        transition: 0.2s;
+        pointer-events: none;
+        height: 24px;
+        aspect-ratio: 1/1;
+        margin: 0 auto;
+      }
+    }
+  }
   .groups {
     width: 100%;
     display: flex;
     gap: 12px;
 
     span {
+      user-select: none;
       cursor: pointer;
       padding: 8px 16px;
       border-radius: var(--border-radius);
-      transition: background 0.3s;
+      transition: 0.3s;
+      border: 1px solid transparent;
+      &.active{
+        border: 1px solid var(--font-color);
+      }
       @media screen and (min-width: 768px) {
         &:hover {
           background: var(--bg-darken-color);
@@ -163,24 +272,87 @@ export default {
   }
 
   .devices {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    width: 100%;
+    gap: 24px;
+    @media screen and (max-width: 1000px) {
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+    @media screen and (max-width: 800px) {
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
     .device {
       position: relative;
       padding: 16px;
+      padding-top: 24px;
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 1/1;
+      transition: background 0.3s, border-radius 0.2s;
       background: var(--bg-darken-color);
       border-radius: var(--border-radius);
-
-      .online, .offline {
+      user-select: none;
+      transform-origin: center;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0px 25px 50px -10px rgba(50, 50, 93, 0.05), 0px 15px 30px -15px rgba(0, 0, 0, 0.01);
+      @media screen and (min-width: 768px) {
+        &:hover {
+        }
+      }
+      .color{
         position: absolute;
-        top: 6px;
-        left: 6px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        input{
+          width: 100%;
+          height: 100%;
+          padding: 0;
+          margin: 0;
+          min-width: 0;
+        }
+      }
+      canvas{
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        pointer-events: none;
+      }
+      span{
+        font-size: 16px;
+        opacity: 0.9;
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        pointer-events: none;
+        @media screen and (max-width: 800px){
+          font-size: 14px;
+        }
+      }
+      .online, .offline {
+        pointer-events: none;
+        position: absolute;
+        top: 8px;
+        left: 8px;
         height: 8px;
         width: 8px;
         background: #26e510;
-        border-radius: 4px;
+        border-radius: 12px;
       }
 
       .offline {
-        background: var(--bg-light-color);
+        background: none;
+        border: 1px solid var(--font-color);
       }
     }
   }

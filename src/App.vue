@@ -8,7 +8,7 @@
       </transition>
     </router-view>
   </mainComponent>
-  <footerComponent></footerComponent>
+<!--  <footerComponent></footerComponent>-->
 </template>
 
 <script>

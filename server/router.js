@@ -388,7 +388,7 @@ module.exports = router => {
         let device = await db.query(`SELECT * FROM "device" WHERE "key" = '${req.query.deviceId}'`).then(res => res.rows[0])
         if (device){
           res.send("ok")
-          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 5*60*1000} / 1000.0) WHERE id = ${device.id}`)
+          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 2*60*1000} / 1000.0) WHERE id = ${device.id}`)
         }else throw ApiException.BadRequest('Не корректные данные!')
       } else throw ApiException.BadRequest('Не корректные данные!')
     } catch (e) {
@@ -414,7 +414,7 @@ module.exports = router => {
    *           '200':
    *               description: если установлен только deviceID возвращает массив значений, установка value нужна для получения конкретных значений, установка color меняет переменную
    * */
-  router.get('/api/device/values', [corsAllMiddleware, authNotMiddleware], async (req, res, next) => {
+  router.get('/api/device/values', [corsAllMiddleware], async (req, res, next) => {
     console.log(req.query)
     try {
       if (req.query.deviceId) {
@@ -440,15 +440,49 @@ module.exports = router => {
                 }
                 break;
               }
+              case 'temp': {
+                value.value = {
+                  temp: Number(value.value.split(',')[0]),
+                  hud: Number(value.value.split(',')[1]),
+                }
+                break;
+              }
             }
             return value
           })
+          console.log(req.query)
           if (req.query.value) {
             switch (req.query.value) {
               case 'color': {
                 values.filter(value => {
                   if (value.title == 'color') {
                     res.json(value.value)
+                  } else {
+                    return false
+                  }
+                })
+                break;
+              }
+              case 'temp': {
+                values.filter(value => {
+                  if (value.title == 'temp') {
+                    res.json({
+                      temp: Number(value.value.split(',')[0]),
+                      hud: Number(value.value.split(',')[1]),
+                    })
+                  } else {
+                    return false
+                  }
+                })
+                break;
+              }
+              case 'effect': {
+                values.filter(value => {
+                  if (value.title == 'effect') {
+                    res.json({
+                      effect: Number(value.value.split(',')[0]),
+                      a: Number(value.value.split(',')[1]),
+                    })
                   } else {
                     return false
                   }
@@ -465,10 +499,10 @@ module.exports = router => {
               a: Number(req.query.color.split(',')[3]),
             }
             if (values.filter(value => value.title == 'color').length > 0) {
-              await db.query(`UPDATE "device_value" SET "value" = '${color.r},${color.g},${color.b},${color.a}' WHERE id = ${values.filter(value=>value.title == 'color')[0].id}`)
+              await db.query(`UPDATE "device_value" SET "value" = '${color.r},${color.g},${color.b},${color.a}' WHERE id = ${values.find(value=>value.title == 'color').id}`)
               res.json(color)
               if (values.filter(value => value.title == 'effect').length > 0) {
-                await db.query(`UPDATE "device_value" SET "value" = '-1,0' WHERE id = ${values.filter(value=>value.title == 'effect')[0].id}`)
+                await db.query(`UPDATE "device_value" SET "value" = '-1,0' WHERE id = ${values.find(value=>value.title == 'effect').id}`)
               }
             } else throw ApiException.BadRequest('Не корректные данные!')
           }
@@ -478,9 +512,17 @@ module.exports = router => {
               a: Number(req.query.effect.split(',')[1]),
             }
             if (values.filter(value => value.title == 'effect').length > 0) {
-              await db.query(`UPDATE "device_value" SET "value" = '${color.effect},${color.a}' WHERE id = ${values.filter(value=>value.title == 'effect')[0].id}`)
+              await db.query(`UPDATE "device_value" SET "value" = '${color.effect},${color.a}' WHERE id = ${values.find(value=>value.title == 'effect').id}`)
               res.json(color)
             } else throw ApiException.BadRequest('Не корректные данные!')
+          }
+          else if (req.query.temp) {
+            let temp = {
+              temp: Number(req.query.temp.split(',')[0]),
+              hud: Number(req.query.temp.split(',')[1]),
+            }
+            await db.query(`UPDATE "device_value" SET "value" = '${temp.temp},${temp.hud}' WHERE id = ${values.find(value=>value.title == 'temp').id}`)
+            res.json(temp)
           }
           else {
             values.map(value => {
@@ -491,7 +533,7 @@ module.exports = router => {
             })
             res.json(values)
           }
-          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 5*60*1000} / 1000.0) WHERE id = ${device.id}`)
+          db.query(`UPDATE "device" SET "online" = to_timestamp(${Date.now() + 2*60*1000} / 1000.0) WHERE id = ${device.id}`)
         } else throw ApiException.BadRequest('Не корректные данные!')
       } else throw ApiException.BadRequest('Не корректные данные!')
     } catch (e) {
