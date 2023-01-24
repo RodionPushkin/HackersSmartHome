@@ -34,6 +34,7 @@
                    :value="rgbToHex(device?.values?.find(item=>item.title == 'color').value.r,device?.values?.find(item=>item.title == 'color').value.g,device?.values?.find(item=>item.title == 'color').value.b)">
           </div>
           <p class="temp" v-if="device.device_type.id == 3">Температура: {{device?.values?.find(item=>item.title == 'temp').value.temp}} °C</p>
+          <p class="temp-big" v-if="device.device_type.id == 3">{{device?.values?.find(item=>item.title == 'temp').value.temp}} <span>°C</span></p>
           <p class="hud" v-if="device.device_type.id == 3">Влажность: {{device?.values?.find(item=>item.title == 'temp').value.hud}}%</p>
           <span>{{ device.title }}</span>
           <canvas :id="'deviceCanvas'+index"></canvas>
@@ -314,6 +315,25 @@ export default {
         &:hover {
         }
       }
+      .temp{
+        pointer-events: none;
+      }
+      .hud{
+        pointer-events: none;
+      }
+      .temp-big{
+        pointer-events: none;
+        font-size: 40px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%,-50%);
+        text-align: center;
+        white-space: nowrap;
+        span{
+          font-size: 18px;
+        }
+      }
       .color{
         position: absolute;
         top: 0;
@@ -347,7 +367,7 @@ export default {
         top: 0;
         pointer-events: none;
       }
-      span{
+      >span{
         font-size: 16px;
         opacity: 0.9;
         position: absolute;
