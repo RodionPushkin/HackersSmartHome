@@ -80,7 +80,7 @@ export default {
     this.groups.push('все')
     setInterval(()=>{
       this.loadData()
-    },10000)
+    },5000)
     if (window.navigator && window.navigator.vibrate) {
       console.log("поддерживается")
     } else {
