@@ -20,26 +20,26 @@ class Longpool {
   }
 
   connect(id, req, res, callback) {
-    console.log('connect',id)
     this.connected.push({
       id: id,
       rid: req.rid,
       req: req,
       res: res
     })
+    console.log('connect connected:',this.connected.length)
     this.notify(id, "connect", callback)
   }
 
   disconnect(id,rid, callback) {
-    console.log('disconnect',id)
     this.notify(id, "disconnect", callback)
     this.connected = this.connected.filter(item => item.id != id && item.rid != rid)
+    console.log('disconnect connected:',this.connected.length)
   }
 
   notify(id, type, callback = ()=>{}) {
-    console.log(type,id)
     switch (type) {
       case "update": {
+        console.log('update connected:',this.connected.length)
         callback(this.connected)
         break
       }
