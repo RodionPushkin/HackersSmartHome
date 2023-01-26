@@ -27,7 +27,7 @@
         <i v-else class="offline"></i>
         <div class="color" v-if="device.device_type == 7" @click="changeLight($event,device,device?.values?.color.value.split(',')[3] == 0 ? 255 : 0)">
           <div v-if="device?.values?.color"
-               :style="`background: ${device?.values?.color.value.split(',')[3] == 0 ? '#000' : rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])}`"></div>
+               :style="`background: ${device?.values?.color.value.split(',')[3] == 0 ? '#000' : rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])}; width: ${device?.values?.color.value.split(',')[3] != 0 ? device.values.color.value.split(',')[3]/(255/50) : device.values.color.value.split(',')[3]}%`"></div>
 <!--          <input v-if="device?.values?.color"-->
 <!--                 @change="changeLight($event,device)" type="color"-->
 <!--                 :value="rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])">-->
@@ -47,7 +47,7 @@
     </div>
     <div class="color-picker-wrapper" :class="{active: colorPicker.show}">
       <div class="color-picker" id="colorpicker">
-        <div class="current-color" :style="`background: ${colorPicker.color[3] == 0 ? '#000' : rgbToHex(colorPicker.color[0],colorPicker.color[1],colorPicker.color[2])}`"></div>
+        <div class="current-color" :style="`background: ${colorPicker.color[3] == 0 ? '#000' : rgbToHex(colorPicker.color[0],colorPicker.color[1],colorPicker.color[2])}; width: ${colorPicker.color[3] != 0 ? colorPicker.color[3]/(255/40) : colorPicker.color[3]}%`"></div>
       </div>
       <div class="backdrop" @click="openColorPicker(false)" @click.prevent.right="openColorPicker(false)"></div>
     </div>
@@ -99,14 +99,12 @@ export default {
         colorpickercanvas = p5.createCanvas(colorpicker.offsetHeight * 0.8, colorpicker.offsetWidth * 0.8)
         colorpickercanvas.parent("colorpicker");
         img =  p5.loadImage("/color.png");
-        // p5.background(100);
-        // p5.noStroke()
+        if(!(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i))){
+          colorpickercanvas.mouseClicked(getColor)
+        }
       }
       let timeout;
-      p5.draw = _ =>{
-        p5.clear()
-        p5.image(img, 0, 0);
-        img.resize(colorpicker.offsetHeight * 0.8, colorpicker.offsetWidth * 0.8)
+      const getColor = () => {
         if(this.colorPicker.show){
           let color = p5.get(p5.mouseX, p5.mouseY)
           if(color[3] != 0){
@@ -126,13 +124,15 @@ export default {
           }
         }
       }
-      // p5.windowResized = _ =>{
-      //   colorpickercanvas.resizeCanvas(colorpicker.offsetHeight * 0.7, colorpicker.offsetWidth * 0.7)
-      // }
+      p5.draw = _ =>{
+        p5.clear()
+        p5.image(img, 0, 0);
+        img.resize(colorpicker.offsetHeight * 0.8, colorpicker.offsetWidth * 0.8)
+        if(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)){
+          getColor()
+        }
+      }
     })
-    // setTimeout(()=>{
-    //   this.colorPicker.show = true
-    // },3000)
     this.groups.push('все')
     this.loadData()
     this.loadData(true)
@@ -149,6 +149,7 @@ export default {
           this.loadData()
           this.loadData(true)
         } else {
+          if(!res.devices) throw "нет девайсов"
           let localDevices = res.devices
           localDevices.forEach(device => {
             device.online = new Date(device.online.replace(' ', 'T')).getTime() > new Date().getTime()
@@ -163,7 +164,7 @@ export default {
         console.log(err)
         setTimeout(()=>{
           this.loadData(true)
-        },5000)
+        },2000)
       })
     },
     hexToRgb(hex) {
@@ -493,7 +494,10 @@ export default {
           width: 45%;
           aspect-ratio: 1/1;
           filter: blur(40px);
-          transition: background 0.3s;
+          @media screen and (max-width: 768px){
+            filter: blur(20px);
+          }
+          transition: background 0.3s, width 0.25s;
           top: 50%;
           left: 50%;
           border-radius: 50%;
@@ -609,7 +613,10 @@ export default {
         position: absolute;
         border-radius: 50%;
         filter: blur(40px);
-        transition: background 0.3s;
+        @media screen and (max-width: 768px){
+          filter: blur(20px);
+        }
+        transition: background 0.3s, width 0.25s;
       }
     }
     .backdrop{

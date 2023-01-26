@@ -128,6 +128,7 @@ if (process.env.NODE_ENV == 'production') {
       res.status(500).send(error.toString())
     }
   })
+  app.use("/",express.static(path.join(__dirname, 'dist')));
   server = https.createServer(ssl, app);
   peer = ExpressPeerServer(server, {
     path: '/peerjs', ssl: ssl, proxied: true,
