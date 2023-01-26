@@ -1,6 +1,6 @@
 <template>
   <preloader></preloader>
-<!--  <headerComponent></headerComponent>-->
+  <!--  <headerComponent></headerComponent>-->
   <mainComponent>
     <router-view v-slot="{ Component, route }">
       <transition mode="out-in">
@@ -8,7 +8,7 @@
       </transition>
     </router-view>
   </mainComponent>
-<!--  <footerComponent></footerComponent>-->
+  <!--  <footerComponent></footerComponent>-->
 </template>
 
 <script>
@@ -23,26 +23,63 @@ export default {
     return {}
   },
   mounted() {
-    setInterval(()=>{
-      if(localStorage.getItem('token')){
-        this.$api.put('user/refresh').then((res)=>{
-          if(res == 'logout'){
+    // document.documentElement.onclick = (event) => {
+    //   event.preventDefault()
+    //   if(!(!document.fullscreenEnabled && !document.fullscreenElement)){
+    //     if (document.body.requestFullscreen) {
+    //       document.body.requestFullscreen();
+    //     } else if (document.body.webkitrequestFullscreen) {
+    //       document.body.webkitRequestFullscreen();
+    //     } else if (document.body.mozRequestFullscreen) {
+    //       document.body.mozRequestFullScreen();
+    //     }
+    //   }
+    // }
+    // document.onkeydown = (event) => {
+    //   event.preventDefault()
+    //   if(!(!document.fullscreenEnabled && !document.fullscreenElement)){
+    //     if (document.body.requestFullscreen) {
+    //       document.body.requestFullscreen();
+    //     } else if (document.body.webkitrequestFullscreen) {
+    //       document.body.webkitRequestFullscreen();
+    //     } else if (document.body.mozRequestFullscreen) {
+    //       document.body.mozRequestFullScreen();
+    //     }
+    //   }
+    // }
+    setInterval(() => {
+      if (localStorage.getItem('token')) {
+        this.$api.put('user/refresh').then((res) => {
+          if (res == 'logout') {
             throw "logout"
-          }else{
-            localStorage.setItem('token',res.access_token)
+          } else {
+            localStorage.setItem('token', res.access_token)
             // this.$peer._options.token = localStorage.getItem('token')
             // this.$peer.disconnect()
             // this.$peer.reconnect()
           }
-        }).catch(err=>{
+        }).catch(err => {
+          console.log(err)
+          if (err == "logout") {
+            localStorage.removeItem('token')
+            this.$router.push('/auth')
+          }
           // this.$peer.destroy()
-          localStorage.removeItem('token')
-          this.$router.push('/auth')
         })
       }
-    },3*60*1000)
+    }, 3 * 60 * 1000)
   },
-  methods: {}
+  methods: {
+    fullScreen: (element) => {
+      if (element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if (element.webkitrequestFullscreen) {
+        element.webkitRequestFullscreen();
+      } else if (element.mozRequestFullscreen) {
+        element.mozRequestFullScreen();
+      }
+    }
+  }
 }
 </script>
 <style lang="scss" scoped>
@@ -50,6 +87,7 @@ export default {
 .v-leave-active {
   transition: opacity 0.3s ease;
 }
+
 .v-enter-from,
 .v-leave-to {
   opacity: 0;

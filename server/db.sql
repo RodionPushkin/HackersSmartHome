@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS "user","token","connection","user_device","device_value","device","device_type";
+DROP TABLE IF EXISTS "user","token","connection","user_device","device_value","device_group","script","device","device_type";
 CREATE TABLE IF NOT EXISTS "user"(
 	"id" BIGSERIAL NOT NULL PRIMARY KEY,
 	"email" CHARACTER VARYING(255) NOT NULL,
@@ -28,11 +28,16 @@ CREATE TABLE IF NOT EXISTS "device_type"(
 );
 CREATE TABLE IF NOT EXISTS "device"(
 	"id" BIGSERIAL NOT NULL PRIMARY KEY,
-	"title" CHARACTER VARYING(500) NOT NULL,
-	"key" TEXT NOT NULL,
+	"title" CHARACTER VARYING(500) NOT NULL, -- название девайса
+	"mac" TEXT NOT NULL, -- мак адрес
+	"key" TEXT NOT NULL, -- ключ доступа для девайса
 	"device_type" INT NOT NULL REFERENCES "device_type"("id"),
-	"enabled" BOOLEAN NOT NULL DEFAULT true,
-	"online" TIMESTAMP(3) WITHOUT TIME ZONE NOT NULL
+	"enabled" BOOLEAN NOT NULL DEFAULT true, -- использовать ли устройство
+	"index" INT, -- индекс в порядке элементов
+	"ip" TEXT NOT NULL, -- ip девайса для хаба
+	"parent" BIGINT REFERENCES "device" ("id"), -- id хаба родителя
+	"deleted" BOOLEAN NOT NULL DEFAULT false, -- если устройство удалено, то ему придется заново проходить регистрацию
+	"online" TIMESTAMP(3) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP(3)::TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS "device_group"(
 	"id" SERIAL NOT NULL PRIMARY KEY,
@@ -44,20 +49,34 @@ CREATE TABLE IF NOT EXISTS "device_value"(
 	"device" INT NOT NULL REFERENCES "device"("id"),
 	"title" CHARACTER VARYING(500) NOT NULL,
 	"value" TEXT NOT NULL,
-	"type" CHARACTER VARYING(500) NOT NULL
+	"created" TIMESTAMP(3) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP(3)::TIMESTAMP,
+	"enable_history" BOOLEAN DEFAULT false -- если указано, то поле не обновляется, а добавляется и при выборке получаем множество
+);
+CREATE TABLE IF NOT EXISTS "script"(
+	"id" BIGSERIAL NOT NULL PRIMARY KEY,
+	"device" BIGINT NOT NULL REFERENCES "device" ("id"),
+	"device_value" TEXT NOT NULL,
+	"value" TEXT NOT NULL,
+	"start_time" TIMESTAMP(3) WITHOUT TIME ZONE,
+	"end_time" TIMESTAMP(3) WITHOUT TIME ZONE,
+	"repeat" BOOLEAN NOT NULL DEFAULT false,
+	"enabled" BOOLEAN NOT NULL DEFAULT true
 );
 CREATE TABLE IF NOT EXISTS "user_device"(
 	"id" BIGSERIAL NOT NULL PRIMARY KEY,
 	"user" INT NOT NULL REFERENCES "user"("id"),
 	"device" INT NOT NULL REFERENCES "device"("id")
 );
-INSERT INTO "device_type" ("title") VALUES ('переключатель'),
+INSERT INTO "device_type" ("title") VALUES
+('умный переключатель'),
 ('датчик дыма'),
 ('датчик температуры'),
 ('датчик газа'),
-('датчик влажности'),
+('датчик протечки'),
 ('датчик освещения'),
-('smart led');
+('умная лампа'),
+('центр управления'),
+('умный мотор');
 
 SELECT * FROM "user_device" AS "UD" INNER JOIN "device" AS "D" ON "UD"."device" = "D"."id";
 SELECT * FROM "token";
@@ -67,3 +86,4 @@ SELECT * FROM "device_type";
 SELECT * FROM "device";
 SELECT * FROM "device_value";
 SELECT * FROM "user_device";
+-- SELECT * FROM "device" WHERE "mac" = $1 AND "key" = $2 AND "deleted" = $3
