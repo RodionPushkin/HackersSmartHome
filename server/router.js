@@ -577,6 +577,12 @@ module.exports = router => {
           })
         } else {
           deviceLongpool.connect(Number(device.id), req, res)
+          db.query(`UPDATE "device" SET "online" = to_timestamp($1 / 1000.0) WHERE "mac" = $2 AND "key" = $3 AND "deleted" = $4`, [
+            Date.now() + 2 * 60 * 1000,
+            mac,
+            key,
+            false
+          ])
           req.on('close', () => {
             deviceLongpool.disconnect(Number(device.id),req.rid)
           })
@@ -637,6 +643,14 @@ module.exports = router => {
                       data.find(connection => connection.id == device.id).res.json({
                         event: "update"
                       })
+                      if(key){
+                        db.query(`UPDATE "device" SET "online" = to_timestamp($1 / 1000.0) WHERE "mac" = $2 AND "key" = $3 AND "deleted" = $4`, [
+                          Date.now() + 2 * 60 * 1000,
+                          mac,
+                          key,
+                          false
+                        ])
+                      }
                     }
                   })
                   userLongpool.notify(user.id, 'update', (data) => {

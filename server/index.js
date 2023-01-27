@@ -77,6 +77,7 @@ app.use(history({
   index: '/index.html'
 }));
 app.use(express.static(path.join(__dirname, 'dist')));
+app.use("/",express.static(path.join(__dirname, 'dist')));
 app.use(errorMiddleware)
 let server;
 let peer
@@ -116,6 +117,11 @@ if (process.env.NODE_ENV == 'production') {
           files.push(file)
         })
       });
+      await fs.readdir('./dist/assets', (err, readedfiles) => {
+        readedfiles.filter(item => item.includes('.') && item != '.gitkeep').forEach(file => {
+          files.push(file)
+        })
+      });
       if (res.push) {
         files.forEach(async (file) => {
           res.push(file, {}).end(await readFile(`dist${file}`))
@@ -128,7 +134,6 @@ if (process.env.NODE_ENV == 'production') {
       res.status(500).send(error.toString())
     }
   })
-  app.use("/",express.static(path.join(__dirname, 'dist')));
   server = https.createServer(ssl, app);
   peer = ExpressPeerServer(server, {
     path: '/peerjs', ssl: ssl, proxied: true,
