@@ -14,7 +14,7 @@
       <span v-for="(group,index) in groups" :key="index" :class="{active: selectedGroup == group}"
             @click="selectedGroup = group">{{ group }}</span>
     </div>
-<!--        <div contenteditable="true" style="white-space: pre;">{{devices[0]}}</div>-->
+<!--        <div contenteditable="true" style="white-space: pre;">{{selected_devices[0]}}</div>-->
     <div class="devices">
       <div class="device"
            v-for="(device,index) in selected_devices"
@@ -32,10 +32,14 @@
 <!--                 @change="changeLight($event,device)" type="color"-->
 <!--                 :value="rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])">-->
         </div>
-        <p class="temp" v-if="device.device_type.id == 3">Влажность:
-          {{ device?.values?.find(item => item.title == 'temp').value.hud }}%</p>
-        <p class="temp-big" v-if="device.device_type.id == 3">
-          {{ device?.values?.find(item => item.title == 'temp').value.temp }} <span>°C</span></p>
+        <p class="alert-big" v-if="device.values?.water" :class="{alert: device.values.water?.value == 1}"></p>
+        <p class="alert-big" v-if="device.values?.gas" :class="{alert: device.values.water?.value == 1}"></p>
+        <p class="temp" v-if="device.device_type == 3">Влажность:
+          {{ device?.values?.humi[device.values?.humi.length-1].value }}%
+        </p>
+        <p class="temp-big" v-if="device.device_type == 3">
+          {{ device?.values?.temp[device.values?.temp.length-1].value }} <span>°C</span>
+        </p>
         <span>{{ device.title }}</span>
         <canvas :id="'deviceCanvas'+index"></canvas>
       </div>
@@ -86,7 +90,7 @@ export default {
   },
   watch: {
     selectedGroup(val) {
-      this.selected_devices = this.devices
+      this.loadData()
     }
   },
   mounted() {
@@ -95,21 +99,16 @@ export default {
       let colorpickercanvas = undefined
       let colorpicker = document.getElementById('colorpicker')
       let img = undefined
-      p5.setup = _ =>{
-        colorpickercanvas = p5.createCanvas(colorpicker.offsetHeight * 0.8, colorpicker.offsetWidth * 0.8)
-        colorpickercanvas.parent("colorpicker");
-        img =  p5.loadImage("/color.png");
-        if(!(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i))){
-          colorpickercanvas.mouseClicked(getColor)
-        }
-      }
+      const mouse = {}
       let timeout;
+      let brightnessTimeout;
       const getColor = () => {
-        if(this.colorPicker.show){
+        if(this.colorPicker.show && !mouse.start){
           let color = p5.get(p5.mouseX, p5.mouseY)
           if(color[3] != 0){
             if(JSON.stringify(color) != JSON.stringify(this.colorPicker.color)){
-              this.colorPicker.color = color
+              this.colorPicker.color = [color[0],color[1],color[2],this.colorPicker.color[3]]
+              delete mouse.start
               clearTimeout(timeout)
               timeout = setTimeout(()=>{
                 let color = {
@@ -124,12 +123,91 @@ export default {
           }
         }
       }
+      p5.setup = _ =>{
+        colorpickercanvas = p5.createCanvas(colorpicker.offsetHeight, colorpicker.offsetWidth)
+        colorpickercanvas.parent("colorpicker");
+        img =  p5.loadImage("/color.png");
+        if(!(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i))){
+          colorpickercanvas.mouseClicked(getColor)
+        }
+        colorpickercanvas.mousePressed((event)=>{
+          event.preventDefault()
+          if(p5.get(p5.mouseX, p5.mouseY)[3] == 0){
+            mouse.start = {
+              x: p5.mouseX,
+              y: p5.mouseY
+            }
+          }
+        })
+        colorpickercanvas.mouseMoved(()=>{
+          if(mouse.start){
+            mouse.move = {
+              x: p5.mouseX,
+              y: p5.mouseY
+            }
+            mouse.length = Math.sqrt(Math.pow(mouse.center.x-mouse.move.x,2)+Math.pow(mouse.center.y-mouse.move.y,2))
+            if(mouse.length > 255){
+              mouse.length = 255
+            }else if(mouse.length < 10){
+              mouse.length = 10
+            }
+            this.colorPicker.color[3] = mouse.length
+          }
+        })
+        colorpickercanvas.mouseReleased(()=>{
+          delete mouse.start
+          let color = {
+            r: this.colorPicker.color[0],
+            g: this.colorPicker.color[1],
+            b: this.colorPicker.color[2],
+            a: this.colorPicker.color[3],
+          }
+          this.$api.get(`device/values?deviceId=${this.colorPicker.device.mac}&color=${color.r},${color.g},${color.b},${color.a}`).then(() => {})
+        })
+        colorpickercanvas.touchStarted(()=>{
+          if(p5.get(p5.mouseX, p5.mouseY)[3] == 0){
+            mouse.start = {
+              x: p5.mouseX,
+              y: p5.mouseY
+            }
+          }
+        })
+        colorpickercanvas.touchMoved(()=>{
+          if(mouse.start){
+            mouse.move = {
+              x: p5.mouseX,
+              y: p5.mouseY
+            }
+            mouse.length = Math.sqrt(Math.pow(mouse.center.x-mouse.move.x,2)+Math.pow(mouse.center.y-mouse.move.y,2))
+            if(mouse.length > 255){
+              mouse.length = 255
+            }else if(mouse.length < 0){
+              mouse.length = 0
+            }
+            this.colorPicker.color[3] = mouse.length
+          }else{
+            getColor()
+          }
+
+        })
+        colorpickercanvas.touchEnded(()=>{
+          delete mouse.start
+          let color = {
+            r: this.colorPicker.color[0],
+            g: this.colorPicker.color[1],
+            b: this.colorPicker.color[2],
+            a: this.colorPicker.color[3],
+          }
+          this.$api.get(`device/values?deviceId=${this.colorPicker.device.mac}&color=${color.r},${color.g},${color.b},${color.a}`).then(() => {})
+        })
+      }
       p5.draw = _ =>{
         p5.clear()
         p5.image(img, 0, 0);
-        img.resize(colorpicker.offsetHeight * 0.8, colorpicker.offsetWidth * 0.8)
-        if(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)){
-          getColor()
+        img.resize(colorpicker.offsetHeight, colorpicker.offsetWidth)
+        mouse.center = {
+          x: colorpicker.offsetHeight * 0.8 * 0.5,
+          y: colorpicker.offsetHeight * 0.8 * 0.5
         }
       }
     })
@@ -153,12 +231,29 @@ export default {
           let localDevices = res.devices
           localDevices.forEach(device => {
             device.online = new Date(device.online.replace(' ', 'T')).getTime() > new Date().getTime()
+            device.group.forEach(group=>{
+              if(!this.groups.includes(group.title)){
+                this.groups.push(group.title)
+              }
+            })
           })
-          if (JSON.stringify(this.devices) != JSON.stringify(localDevices)) {
+          // if (JSON.stringify(this.devices) != JSON.stringify(localDevices)) {
             this.devices = localDevices
-            this.selected_devices = localDevices
-            console.log(localDevices)
+            // localDevices.forEach(device=>{
+            //   console.log(device.group)
+            // })
+          console.log(this.selectedGroup,this.groups)
+          if(this.selectedGroup != 'все'){
+            localDevices = localDevices.filter(device=>!!device.group.find(group=>group.title == this.selectedGroup))
           }
+          console.log(localDevices.filter(device=>!!device.group.find(group=>group.title == this.selectedGroup)))
+            // localDevices = localDevices.map(device => {
+            //   if(device.group.find(group=>group.title == this.selectedGroup))return device
+            // })
+            // console.log(localDevices.filter(device=>!!device.group.find(group=>group.title == this.selectedGroup)))
+            this.selected_devices = localDevices
+            // console.log(localDevices)
+          // }
         }
       }).catch(err => {
         console.log(err)
@@ -311,23 +406,25 @@ export default {
       }
     },
     toggleStart(event,device,force = false){
-      if(force){
-        this.openColorPicker(true,device)
-        this.animate(event.target,250)
-      }else{
-        this.toggle.is_toggling = true
-        this.toggle.time = new Date().getTime()
-        const interval = setInterval(()=>{
-          if(this.toggle.is_toggling == false) clearInterval(interval)
-          if(this.toggle.time != 0){
-            if(this.toggle.time+this.toggle.action_time < new Date().getTime()){
-              this.toggle.is_toggling = false
-              this.openColorPicker(true,device)
-              this.toggle.time = 0
-              this.animate(event.target,250)
+      if(device.device_type == 7){
+        if(force){
+          this.openColorPicker(true,device)
+          this.animate(event.target,250)
+        }else{
+          this.toggle.is_toggling = true
+          this.toggle.time = new Date().getTime()
+          const interval = setInterval(()=>{
+            if(this.toggle.is_toggling == false) clearInterval(interval)
+            if(this.toggle.time != 0){
+              if(this.toggle.time+this.toggle.action_time < new Date().getTime()){
+                this.toggle.is_toggling = false
+                this.openColorPicker(true,device)
+                this.toggle.time = 0
+                this.animate(event.target,250)
+              }
             }
-          }
-        },30)
+          },30)
+        }
       }
     },
     toggleEnd(event,device){
@@ -349,7 +446,7 @@ export default {
       //   }
       //   this.$api.get(`device/values?deviceId=${this.colorPicker.device.mac}&color=${color.r},${color.g},${color.b},${color.a}`).then(() => {})
       // }
-    }
+    },
   }
 }
 </script>
@@ -481,7 +578,25 @@ export default {
         top: 12px;
         right: 12px;
       }
-
+      .alert-big{
+        background: #26e510;
+        width: 25%;
+        &.alert{
+          background: #bd0e22;
+          width: 45%;
+        }
+        position: absolute;
+        aspect-ratio: 1/1;
+        filter: blur(40px);
+        @media screen and (max-width: 768px){
+          filter: blur(20px);
+        }
+        transition: background 0.3s, width 0.25s;
+        top: 50%;
+        left: 50%;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+      }
       .color {
         position: absolute;
         top: 0;
@@ -574,7 +689,7 @@ export default {
     height: 100vh;
     z-index: 999;
     .color-picker{
-      padding: 24px;
+      //padding: 24px;
       pointer-events: all;
       position: relative;
       width: 100%;
@@ -591,6 +706,7 @@ export default {
         margin: 0 24px;
       }
       &:before{
+        pointer-events: all;
         z-index: -1;
         position: absolute;
         width: 100%;
@@ -603,9 +719,10 @@ export default {
         border-radius: var(--border-radius);
         opacity: 0.9;
       }
-      canvas{
+      .p5Canvas{
         //display: none;
         //margin: auto;
+        pointer-events: none;
       }
       .current-color{
         width: 40%;
@@ -613,6 +730,7 @@ export default {
         position: absolute;
         border-radius: 50%;
         filter: blur(40px);
+        pointer-events: none;
         @media screen and (max-width: 768px){
           filter: blur(20px);
         }
