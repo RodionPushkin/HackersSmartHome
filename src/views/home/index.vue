@@ -126,7 +126,7 @@ export default {
       p5.setup = _ =>{
         colorpickercanvas = p5.createCanvas(colorpicker.offsetHeight, colorpicker.offsetWidth)
         colorpickercanvas.parent("colorpicker");
-        img =  p5.loadImage("/color.png");
+        img =  p5.loadImage("/api/static/color.png");
         if(!(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i))){
           colorpickercanvas.mouseClicked(getColor)
         }
