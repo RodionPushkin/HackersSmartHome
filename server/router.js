@@ -566,6 +566,7 @@ module.exports = router => {
         device = await db.query(`SELECT * FROM "device" WHERE "id" = $1 AND "deleted" = $2`, [deviceid, false]).then(res => res.rows[0])
         if (!device) throw ApiException.DeviceUnauthorized()
       } else throw ApiException.BadRequest('Не корректные данные!')
+
       if (useLongpool) {
         if (isFromUser) {
           userLongpool.connect(Number(user.id), req, res)
@@ -603,7 +604,8 @@ module.exports = router => {
                 b: Number(item.value.split(',')[2]),
                 a: Number(item.value.split(',')[3])
               }
-              if (values.filter(value2 => value2.title == 'effect').length > 0 && values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0] != -1) {
+              if (values.filter(value2 => value2.title == 'effect').length > 0 &&
+                values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0] != -1) {
                 item.value = {
                   effect: Number(values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0]),
                   a: Number(values.filter(value2 => value2.title == 'effect')[0].value.split(',')[1])
@@ -630,7 +632,8 @@ module.exports = router => {
             result[value] = values.find(item => item.title == value).value
           }
           res.json(result)
-        } else if (setter.length > 0) {
+        }
+        else if (setter.length > 0) {
           if (!req.query.history) req.query.history = []
           const result = {}
           setter.forEach((val, index) => {
@@ -665,8 +668,13 @@ module.exports = router => {
                   res.json(result)
                 }
               })
-            } else {
+            }
+            else {
+              console.log(req.query[val])
               db.query(`UPDATE "device_value" SET "value" = $1 WHERE id = $2`, [req.query[val], values.find(item => item.title == val).id]).then(() => {
+                if(val == "color"){
+                  db.query(`UPDATE "device_value" SET "value" = $1 WHERE id = $2`, ["-1,0", values.find(item => item.title == "effect").id])
+                }
                 if (index == setter.length - 1) {
                   deviceLongpool.notify(device.id, 'update', (data) => {
                     if (data.find(connection => connection.id == device.id)) {
@@ -689,7 +697,8 @@ module.exports = router => {
               })
             }
           })
-        } else {
+        }
+        else {
           const result = {}
           values.forEach(value => {
             if (value.enable_history) {

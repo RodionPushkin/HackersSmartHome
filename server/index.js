@@ -1,9 +1,9 @@
 const express = require('express')
-const app = express();
+const http2Express = require('http2-express-bridge')
+const app = process.env.NODE_ENV == 'production' ? http2Express(express) : express();
 const {ExpressPeerServer} = require('peer');
 const http = require('http');
-const https = require('spdy');
-const httpsRedirect = require('express-https-redirect');
+const https = require('http2');
 const session = require('cookie-session');
 const history = require('connect-history-api-fallback');
 const path = require('path');
@@ -20,9 +20,6 @@ const swaggerUi = require('swagger-ui-express')
 const fs = require('fs')
 const {promisify} = require("util")
 const readFile = promisify(fs.readFile)
-const limiter = require("express-rate-limit");
-const slowDown = require("express-slow-down");
-const compression = require("compression");
 const errorMiddleware = require('./middleware/error.middleware')
 const swaggerDocs = swaggerJsDoc({
   swaggerDefinition: {
@@ -33,21 +30,6 @@ const swaggerDocs = swaggerJsDoc({
     }
   }, apis: ['./server/router.js']
 });
-// app.use(require('cors')({
-//   credentials: true, methods: ['OPTION', 'GET', 'POST', 'PUT', 'DELETE'], origin: '*'
-// }));
-// app.use(limiter({
-//     windowMs: 3 * 60 * 1000,
-//     max: 100,
-//     message: 'Too many requests, please try again after an 3 min',
-//     standardHeaders: true,
-//     legacyHeaders: false,
-// }))
-// app.use(slowDown({
-//     windowMs: 15 * 60 * 1000,
-//     delayAfter: 100,
-//     delayMs: 500
-// }))
 app.use(fileUpload({
   useTempFiles: true, tempFileDir: '/tmp/',
   // abortOnLimit: true,
@@ -68,52 +50,32 @@ app.use(
     contentSecurityPolicy: false
   }),
 );
-app.use(compression())
 require('./router')(app)
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs))
-app.use("/api/static",express.static(path.join(__dirname, 'static')));
+app.use("/api/static", express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, 'static')));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use(history({
   index: '/index.html'
 }));
+app.use(express.static(path.join(__dirname, 'static')));
 app.use(express.static(path.join(__dirname, 'dist')));
-app.use("/",express.static(path.join(__dirname, 'dist')));
+app.use("/", express.static(path.join(__dirname, 'dist')));
+
 app.use(errorMiddleware)
 let server;
 let peer
-// process.env.NODE_ENV = 'production'
-//process.env.NODE_ENV == 'production'
-console.log("process", process.env.NODE_ENV)
 if (process.env.NODE_ENV == 'production') {
-  app.enable('trust proxy')
-  // app.use(httpsRedirect())
-  // app.use((req, res, next) => {
-  //   req.secure ? next() : res.redirect('https://' + req.headers.host + req.url)
-  // })
-  const ssl = {
+  const options = {
     key: fs.readFileSync(path.join(__dirname, '../privkey.pem')),
-    cert: fs.readFileSync(path.join(__dirname, '../fullchain.pem'))
+    cert: fs.readFileSync(path.join(__dirname, '../fullchain.pem')),
+    allowHTTP1: true
   }
   app.get("/push", async (req, res) => {
     try {
       let files = []
       await fs.readdir('./dist/', (err, readedfiles) => {
         readedfiles.filter(item => item.includes('.') && item != '.gitkeep' && item != 'index.html').forEach(file => {
-          files.push(file)
-        })
-      });
-      await fs.readdir('./dist/js', (err, readedfiles) => {
-        readedfiles.filter(item => item.includes('.') && item != '.gitkeep').forEach(file => {
-          files.push(file)
-        })
-      });
-      await fs.readdir('./dist/css', (err, readedfiles) => {
-        readedfiles.filter(item => item.includes('.') && item != '.gitkeep').forEach(file => {
-          files.push(file)
-        })
-      });
-      await fs.readdir('./dist/sounds', (err, readedfiles) => {
-        readedfiles.filter(item => item.includes('.') && item != '.gitkeep').forEach(file => {
           files.push(file)
         })
       });
@@ -134,9 +96,9 @@ if (process.env.NODE_ENV == 'production') {
       res.status(500).send(error.toString())
     }
   })
-  server = https.createServer(ssl, app);
+  server = https.createSecureServer(options, app);
   peer = ExpressPeerServer(server, {
-    path: '/peerjs', ssl: ssl, proxied: true,
+    path: '/peerjs', ssl: options, proxied: true,
   });
 } else {
   server = http.createServer(app);
@@ -151,16 +113,9 @@ app.use('/', peer);
 require('./peer')(peer)
 global.peer = peer
 try {
-  console.log("port",port)
   server.listen(port, () => {
     console.log(`Server started on: http${port == 443 ? 's' : ''}://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
     db.checkConnection()
-    if(process.env.NODE_ENV == 'production'){
-      httpserver = http.createServer(app);
-      httpserver.listen(80, () => {
-        console.log(`http server started on: http://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
-      });
-    }
   });
 } catch (e) {
   console.log(e)

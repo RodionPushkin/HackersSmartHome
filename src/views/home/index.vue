@@ -19,32 +19,37 @@
         >{{ group }}</span
       >
     </div>
-    <!--        <div contenteditable="true" style="white-space: pre;">{{selected_devices[0]}}</div>-->
-    <div class="devices">
-      <div
-        class="device"
-        v-for="(device, index) in selected_devices"
-        :key="index"
-        @touchstart="toggleStart($event, device)"
-        @touchend="toggleEnd($event, device)"
-        @click.prevent.right="toggleStart($event, device, true)"
-      >
-        <i v-if="device.online" class="online"></i>
-        <i v-else class="offline"></i>
+<!--            <div contenteditable="true" style="white-space: pre;">{{selected_devices[0]}}</div>-->
+    <div class="devices" ref="devices" @mouseleave="stopDrag">
+      <div class="device-wrapper"
+           v-for="(device, index) in selected_devices"
+           :key="index">
         <div
-          class="color"
-          v-if="device.device_type == 7"
-          @click="
+          class="device"
+          @mousedown="mouseStart($event,device)"
+          @mouseup="mouseEnd($event,device)"
+          @mousemove="mouseMove($event,device)"
+          @touchstart="touchStart($event,device)"
+          @touchend="touchEnd($event,device)"
+          @touchmove="touchMove($event,device)"
+          @click.prevent.right="toggleStart($event, device, true)"
+        >
+          <i v-if="device.online" class="online"></i>
+          <i v-else class="offline"></i>
+          <div
+            class="color"
+            v-if="device.device_type == 7"
+            @click="
             changeLight(
               $event,
               device,
               device?.values?.color.value.split(',')[3] == 0 ? 255 : 0
             )
           "
-        >
-          <div
-            v-if="device?.values?.color"
-            :style="`background: ${
+          >
+            <div
+              v-if="device?.values?.color"
+              :style="`background: ${
               device?.values?.color.value.split(',')[3] == 0
                 ? '#000'
                 : rgbToHex(
@@ -57,46 +62,49 @@
                 ? device.values.color.value.split(',')[3] / (255 / 50)
                 : device.values.color.value.split(',')[3]
             }%`"
-          ></div>
-          <!--          <input v-if="device?.values?.color"-->
-          <!--                 @change="changeLight($event,device)" type="color"-->
-          <!--                 :value="rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])">-->
+            ></div>
+            <!--          <input v-if="device?.values?.color"-->
+            <!--                 @change="changeLight($event,device)" type="color"-->
+            <!--                 :value="rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])">-->
+          </div>
+          <p
+            class="alert-big"
+            v-if="device.values?.water"
+            :class="{ alert: device.values.water?.value == 1 }"
+          ></p>
+          <p
+            class="alert-big"
+            v-if="device.values?.gas"
+            :class="{ alert: device.values.water?.value == 1 }"
+          ></p>
+          <p class="temp" v-if="device.device_type == 3">
+            Влажность:
+            {{ device?.values?.humi[device.values?.humi.length - 1].value }}%
+          </p>
+          <p class="temp-big" v-if="device.device_type == 3">
+            {{ device?.values?.temp[device.values?.temp.length - 1].value }}
+            <span>°C</span>
+          </p>
+          <span>{{ device.title }}</span>
+          <canvas :id="'deviceCanvas' + index"></canvas>
         </div>
-        <p
-          class="alert-big"
-          v-if="device.values?.water"
-          :class="{ alert: device.values.water?.value == 1 }"
-        ></p>
-        <p
-          class="alert-big"
-          v-if="device.values?.gas"
-          :class="{ alert: device.values.water?.value == 1 }"
-        ></p>
-        <p class="temp" v-if="device.device_type == 3">
-          Влажность:
-          {{ device?.values?.humi[device.values?.humi.length - 1].value }}%
-        </p>
-        <p class="temp-big" v-if="device.device_type == 3">
-          {{ device?.values?.temp[device.values?.temp.length - 1].value }}
-          <span>°C</span>
-        </p>
-        <span>{{ device.title }}</span>
-        <canvas :id="'deviceCanvas' + index"></canvas>
       </div>
-      <div class="device add" @click="addDevice($event)">
-        <svg
-          viewBox="0 0 512 512"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M256 112V400M400 256H112"
-            stroke="currentColor"
-            stroke-width="32"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+      <div class="device-wrapper">
+        <div class="device add" @click="addDevice($event)">
+          <svg
+            viewBox="0 0 512 512"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M256 112V400M400 256H112"
+              stroke="currentColor"
+              stroke-width="32"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
       </div>
     </div>
     <div class="color-picker-wrapper" :class="{ active: colorPicker.show }">
@@ -128,7 +136,7 @@
 </template>
 <script>
 import gsap from "gsap";
-import { TweenMax } from "gsap";
+import { TweenMax, TweenLite } from "gsap";
 import P5 from "p5";
 import { isProxy, toRaw } from "vue";
 
@@ -141,13 +149,14 @@ export default {
       device_type: [],
       groups: [],
       selectedGroup: "все",
-      dragInterval: undefined,
-      isDragging: false,
-      dragEl: undefined,
       toggle: {
         is_toggling: false,
         time: 0,
         action_time: 700,
+      },
+      drag: {
+        item: undefined,
+        interval: undefined
       },
       p5: undefined,
       colorPicker: {
@@ -337,10 +346,13 @@ export default {
           } else {
             if (!res.devices) throw "нет девайсов";
             let localDevices = res.devices;
-            localDevices.forEach((device) => {
+            localDevices.forEach((device,index) => {
               device.online =
                 new Date(device.online.replace(" ", "T")).getTime() >
                 new Date().getTime();
+              if(!device.index){
+                device.index = index
+              }
               device.group.forEach((group) => {
                 if (!this.groups.includes(group.title)) {
                   this.groups.push(group.title);
@@ -352,7 +364,7 @@ export default {
             // localDevices.forEach(device=>{
             //   console.log(device.group)
             // })
-            console.log(this.selectedGroup, this.groups);
+            // console.log(this.selectedGroup, this.groups,this.devices);
             if (this.selectedGroup != "все") {
               localDevices = localDevices.filter(
                 (device) =>
@@ -361,14 +373,14 @@ export default {
                   )
               );
             }
-            console.log(
-              localDevices.filter(
-                (device) =>
-                  !!device.group.find(
-                    (group) => group.title == this.selectedGroup
-                  )
-              )
-            );
+            // console.log(
+            //   localDevices.filter(
+            //     (device) =>
+            //       !!device.group.find(
+            //         (group) => group.title == this.selectedGroup
+            //       )
+            //   )
+            // );
             // localDevices = localDevices.map(device => {
             //   if(device.group.find(group=>group.title == this.selectedGroup))return device
             // })
@@ -432,7 +444,7 @@ export default {
       if (vibration == 0) {
         el.style.transform = "none";
       } else {
-        TweenMax.to(el, 0.03, {
+        TweenLite.to(el, 0.03, {
           x: `${Math.random() > 0.5}${Math.random() * 10}`,
           y: `${Math.random() > 0.5}${Math.random() * 10}`,
           rotation: `2`,
@@ -444,71 +456,132 @@ export default {
     addDevice(event) {
       this.animate(event.target, 150);
     },
-    startDrag(event, device) {
-      console.log(event, device);
-      this.isDragging = true;
-      this.animate(event.target, 100);
-      // event.target.style.opacity=0
-      // event.dataTransfer.dropEffect = "move"
-      // event.dataTransfer.effectAllowed = "move"
-      // event.dataTransfer.setData('item',device.index)
-      this.dragEl = event.target;
-      this.dragInterval = setInterval(() => {
-        this.animate(event.target);
-      }, 320);
-    },
-    stopDrag(event, device) {
-      this.isDragging = false;
-      clearInterval(this.dragInterval);
-      gsap.set(this.dragEl, {
-        css: {
-          transform: "none",
-          top: "auto",
-          left: "auto",
-        },
-      });
-      // event.target.style.opacity=1
-    },
-    moveDrag(event, device) {
-      if (this.isDragging) {
-        console.log(2, event);
-        gsap.set(this.dragEl, {
-          css: {
-            left: event.clientX - this.dragEl.offsetWidth / 2,
-            top: event.clientY - this.dragEl.offsetHeight / 2,
-          },
-        });
+    touchStart(event, item) {
+      if (window.mobileAndTabletCheck() && !this.drag.item) {
+        this.animate(event.target,100)
+        this.drag.item = item
+        event.target.classList.toggle('active', true)
+        clearInterval(this.drag.interval)
+        this.drag.interval = setInterval(()=>{
+          TweenLite.to(event.target, 0.03, {
+            rotation: `3`,
+            yoyo: true,
+            repeat: 1,
+          });
+        },100)
       }
     },
-    onDrop(event, index) {
-      index = index.index;
-      const dragIndex = Number(event.dataTransfer.getData("item"));
-      if (index != dragIndex) {
-        let dropItem = this.devices.find((item) => item.index == index);
-        let dragItem = this.devices.find((item) => item.index == dragIndex);
-        this.devices.splice(
-          this.devices.findIndex((item) => item == dragItem),
-          1
-        );
-        this.devices.splice(
-          this.devices.findIndex((item) => item == dropItem),
-          1
-        );
-        dropItem.index = dragIndex;
-        dragItem.index = index;
-        this.devices.push(dragItem, dropItem);
-        this.devices = this.devices.sort((a, b) => {
-          if (a.index < b.index) return -1;
-          if (a.index > b.index) return 1;
-          return 0;
-        });
+    touchEnd(event, item) {
+      if (window.mobileAndTabletCheck()){
+        for (let i = 0; i < this.$refs.devices.querySelectorAll('.device').length; i++) {
+          const index = i
+          const device = this.$refs.devices.querySelectorAll('.device')[i]
+          if (index != this.devices.find(c => c == item).index &&
+            event.changedTouches[0].pageX >= device.offsetLeft &&
+            event.changedTouches[0].pageX <= device.offsetWidth + device.offsetLeft &&
+            event.changedTouches[0].pageY >= device.offsetTop &&
+            event.changedTouches[0].pageY <= device.offsetHeight + device.offsetTop) {
+            let newIndex = this.devices[index].index
+            this.devices[index].index = item.index
+            this.devices.map(c=>{
+              if(c != this.devices[index] && c.index == item.index){
+                c.index = newIndex
+              }
+              return c
+            })
+            this.filterByIndex()
+            break
+          }
+        }
+        this.stopDrag()
       }
     },
-    computerStartDrag(event, device) {},
-    computerStopDrag(event, device) {},
-    computerDropDrag(event, device) {},
-    computerMoveDrag(event, device) {},
-    mobileMoveDrag(event, device) {},
+    touchMove(event, item) {
+      if (window.mobileAndTabletCheck() && this.drag.item) {
+        // event.target.style.top = `${event.changedTouches[0].pageY - event.target.offsetHeight / 2}px`
+        // event.target.style.left = `${event.changedTouches[0].pageX - event.target.offsetWidth / 2}px`
+        gsap.to(event.target,{
+          top: event.changedTouches[0].pageY - event.target.offsetHeight / 2,
+          left: event.changedTouches[0].pageX - event.target.offsetWidth / 2,
+          duration: 0
+        })
+      }
+    },
+    mouseStart(event, item) {
+      if (!window.mobileAndTabletCheck() && !this.drag.item) {
+        this.animate(event.target,100)
+        this.drag.item = item
+        event.target.classList.toggle('active', true)
+        clearInterval(this.drag.interval)
+        this.drag.interval = setInterval(()=>{
+          TweenLite.to(event.target, 0.03, {
+            rotation: `3`,
+            yoyo: true,
+            repeat: 1,
+          });
+        },100)
+      }
+    },
+    mouseEnd(event, item) {
+      if (!window.mobileAndTabletCheck()){
+        for (let i = 0; i < this.$refs.devices.querySelectorAll('.device').length; i++) {
+          const index = i
+          const device = this.$refs.devices.querySelectorAll('.device')[i]
+          if (index != this.devices.find(c => c == item).index &&
+            event.pageX >= device.offsetLeft &&
+            event.pageX <= device.offsetWidth + device.offsetLeft &&
+            event.pageY >= device.offsetTop &&
+            event.pageY <= device.offsetHeight + device.offsetTop) {
+            let newIndex = this.devices[index].index
+            this.devices[index].index = item.index
+            this.devices.map(c=>{
+              if(c != this.devices[index] && c.index == item.index){
+                c.index = newIndex
+              }
+              return c
+            })
+            this.filterByIndex()
+            break
+          }
+        }
+        this.stopDrag()
+      }
+    },
+    mouseMove(event, item) {
+      if (!window.mobileAndTabletCheck() && this.drag.item) {
+        gsap.to(event.target, {
+          top: event.pageY - event.target.offsetHeight / 2,
+          left: event.pageX - event.target.offsetWidth / 2,
+          duration: 0
+        })
+      }
+    },
+    stopDrag() {
+      if (this.drag.item) {
+        this.drag.item = undefined
+        clearInterval(this.drag.interval)
+        this.$refs.devices.querySelectorAll('.device').forEach((device, index) => {
+          device.classList?.toggle('active', false)
+          gsap.to(device, {
+            top: "auto",
+            left: "auto",
+            duration: 0.3,
+            rotation: 0
+          })
+        })
+      }
+    },
+    filterByIndex(){
+      for (let j = this.devices.length - 1; j > 0; j--) {
+        for (let i = 0; i < j; i++) {
+          if (this.devices[i].index > this.devices[i + 1].index) {
+            let temp = this.devices[i];
+            this.devices[i] = this.devices[i + 1];
+            this.devices[i + 1] = temp;
+          }
+        }
+      }
+    },
     changeLight(event, device, alpha = 255) {
       if (event.target.value && device) {
         let color = this.hexToRgb(event.target.value);
@@ -655,22 +728,35 @@ export default {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     width: 100%;
-    gap: 24px;
+    gap: 16px;
+    place-items: center ;
     @media screen and (max-width: 1000px) {
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 20px;
     }
     @media screen and (max-width: 800px) {
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
     }
-
+    .device-wrapper {
+      width: 256px;
+      height: 256px;
+      @media screen and  (max-width: 768px) {
+        width: 156px;
+        height: 156px;
+      }
+      aspect-ratio: 1/1;
+      background: rgba(220, 220, 220, 0.25);
+      border-radius: var(--border-radius);
+    }
     .device {
-      position: relative;
+      position: absolute;
       padding: 16px;
       padding-top: 24px;
-      width: 100%;
-      max-width: 400px;
+      width: 256px;
+      height: 256px;
+      @media screen and  (max-width: 768px) {
+        width: 156px;
+        height: 156px;
+      }
       aspect-ratio: 1/1;
       transition: background 0.3s, border-radius 0.2s;
       background: var(--bg-darken-color);
@@ -684,9 +770,10 @@ export default {
       gap: 12px;
       box-shadow: 0px 25px 50px -10px rgba(50, 50, 93, 0.05),
         0px 15px 30px -15px rgba(0, 0, 0, 0.01);
-      @media screen and (min-width: 768px) {
-        &:hover {
-        }
+
+      &.active {
+        z-index: 999;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.03);
       }
 
       .temp,
@@ -718,6 +805,7 @@ export default {
       .alert-big {
         background: #26e510;
         width: 25%;
+        pointer-events: none;
         &.alert {
           background: #bd0e22;
           width: 45%;
@@ -725,21 +813,20 @@ export default {
         position: absolute;
         aspect-ratio: 1/1;
         filter: blur(40px);
-        @media screen and (max-width: 768px) {
-          filter: blur(20px);
-        }
         transition: background 0.3s, width 0.25s;
         top: 50%;
         left: 50%;
         border-radius: 50%;
         transform: translate(-50%, -50%);
+        @media screen and (max-width: 768px) {
+          filter: blur(20px);
+        }
       }
       .color {
-        position: absolute;
-        top: 0;
-        left: 0;
+        position: static;
         width: 100%;
         height: 100%;
+        //pointer-events: none;
 
         > div {
           position: absolute;
