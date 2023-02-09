@@ -10,7 +10,7 @@ const path = require('path');
 const db = require("./database");
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const port = process.env.NODE_ENV == 'production' ? 443 : 81;
+const port = process.env.NODE_ENV == 'production' ? 443 : 80;
 const ruid = require('express-ruid');
 const config = require('../config.json');
 const fileUpload = require('express-fileupload');
