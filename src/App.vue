@@ -52,7 +52,7 @@ export default {
         this.$api.put('user/refresh').then((res) => {
           if (res == 'logout') {
             throw "logout"
-          } else {
+          } else if(res.access_token) {
             localStorage.setItem('token', res.access_token)
             // this.$peer._options.token = localStorage.getItem('token')
             // this.$peer.disconnect()

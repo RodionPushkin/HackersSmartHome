@@ -551,7 +551,8 @@ module.exports = router => {
         if (!userid) throw ApiException.BadRequest("Не корректные данные!11")
         user = await db.query(`SELECT * FROM "user" WHERE "id" = $1`, [userid]).then(res => res.rows[0])
         if (!user) throw ApiException.DeviceUnauthorized()
-      } else if (accessToken) {
+      }
+      else if (accessToken) {
         isFromUser = true
         const refreshToken = req.cookies.refresh_token
         if (!req.cookies.device_id || !refreshToken || !accessToken) {
@@ -566,7 +567,6 @@ module.exports = router => {
         device = await db.query(`SELECT * FROM "device" WHERE "id" = $1 AND "deleted" = $2`, [deviceid, false]).then(res => res.rows[0])
         if (!device) throw ApiException.DeviceUnauthorized()
       } else throw ApiException.BadRequest('Не корректные данные!')
-
       if (useLongpool) {
         if (isFromUser) {
           userLongpool.connect(Number(user.id), req, res)
@@ -595,28 +595,7 @@ module.exports = router => {
       else {
         const value = req.query.value
         const values = await db.query(`SELECT * FROM "device_value" WHERE "device" = '${Number(device.id)}' ORDER BY "created"`).then(res => res.rows)
-        values.map(item => {
-          switch (item.title) {
-            case 'color': {
-              item.value = {
-                r: Number(item.value.split(',')[0]),
-                g: Number(item.value.split(',')[1]),
-                b: Number(item.value.split(',')[2]),
-                a: Number(item.value.split(',')[3])
-              }
-              if (values.filter(value2 => value2.title == 'effect').length > 0 &&
-                values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0] != -1) {
-                item.value = {
-                  effect: Number(values.filter(value2 => value2.title == 'effect')[0].value.split(',')[0]),
-                  a: Number(values.filter(value2 => value2.title == 'effect')[0].value.split(',')[1])
-                }
-              }
-              break;
-            }
-          }
-          return item
-        })
-        const setter = Object.keys(req.query).filter(key => key != "key" && key != "parent" && key != "deviceId" && key != "device_type" && key != "value" && key != "history" && key != "ip")
+        const setter = Object.keys(req.query).filter(key => key != "key" && key != "parent" && key != "deviceId" && key != "device_type" && key != "value" && key != "history" && key != "ip" && key != "index")
         if (value) {
           const result = {}
           if (values.find(item => item.title == value).enable_history) {
@@ -673,7 +652,7 @@ module.exports = router => {
               console.log(req.query[val])
               db.query(`UPDATE "device_value" SET "value" = $1 WHERE id = $2`, [req.query[val], values.find(item => item.title == val).id]).then(() => {
                 if(val == "color"){
-                  db.query(`UPDATE "device_value" SET "value" = $1 WHERE id = $2`, ["-1,0", values.find(item => item.title == "effect").id])
+                  db.query(`UPDATE "device_value" SET "value" = $1 WHERE id = $2`, ["-1", values.find(item => item.title == "effect").id])
                 }
                 if (index == setter.length - 1) {
                   deviceLongpool.notify(device.id, 'update', (data) => {

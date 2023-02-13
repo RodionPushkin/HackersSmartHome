@@ -116,6 +116,12 @@ try {
   server.listen(port, () => {
     console.log(`Server started on: http${port == 443 ? 's' : ''}://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
     db.checkConnection()
+    if(process.env.NODE_ENV == 'production'){
+      let httpserver = http.createServer(app);
+      httpserver.listen(80, () => {
+        console.log(`http server started on: http://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
+      });
+    }
   });
 } catch (e) {
   console.log(e)

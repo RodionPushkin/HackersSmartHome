@@ -67,15 +67,17 @@
             <!--                 @change="changeLight($event,device)" type="color"-->
             <!--                 :value="rgbToHex(device?.values?.color.value.split(',')[0],device?.values?.color.value.split(',')[1],device?.values?.color.value.split(',')[2])">-->
           </div>
-          <p
-            class="alert-big"
+          <p class="alert-big"
             v-if="device.values?.water"
             :class="{ alert: device.values.water?.value == 1 }"
           ></p>
-          <p
-            class="alert-big"
-            v-if="device.values?.gas"
-            :class="{ alert: device.values.water?.value == 1 }"
+          <p class="alert-big"
+             v-if="device.values?.gas"
+             :class="{ alert: device.values.water?.value == 1 }"
+          ></p>
+          <p class="alert-big"
+             v-if="device.values?.enabled"
+             :class="{ alert: device.values.enabled?.value == 1 }"
           ></p>
           <p class="temp" v-if="device.device_type == 3">
             Влажность:
@@ -156,7 +158,8 @@ export default {
       },
       drag: {
         item: undefined,
-        interval: undefined
+        interval: undefined,
+        time: undefined
       },
       p5: undefined,
       colorPicker: {
@@ -791,7 +794,9 @@ export default {
         transform: translate(-50%, -50%);
         text-align: center;
         white-space: nowrap;
-
+        @media screen and (max-width: 768px) {
+          font-size: 28px;
+        }
         span {
           font-size: 18px;
         }
