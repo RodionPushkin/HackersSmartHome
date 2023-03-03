@@ -43,14 +43,14 @@
             changeLight(
               $event,
               device,
-              device?.values?.color.value.split(',')[3] == 0 ? 255 : 0
+              device?.values?.light.value == 0 ? 255 : 0
             )
           "
           >
             <div
               v-if="device?.values?.color"
               :style="`background: ${
-              device?.values?.color.value.split(',')[3] == 0
+              device?.values?.light.value == 0
                 ? '#000'
                 : rgbToHex(
                     device?.values?.color.value.split(',')[0],
@@ -58,9 +58,9 @@
                     device?.values?.color.value.split(',')[2]
                   )
             }; width: ${
-              device?.values?.color.value.split(',')[3] != 0
-                ? device.values.color.value.split(',')[3] / (255 / 50)
-                : device.values.color.value.split(',')[3]
+              device?.values?.light.value != 0
+                ? device?.values?.light.value / (255 / 50)
+                : device?.values?.light.value
             }%`"
             ></div>
             <!--          <input v-if="device?.values?.color"-->
@@ -207,7 +207,7 @@ export default {
                 };
                 this.$api
                   .get(
-                    `device/values?deviceId=${this.colorPicker.device.mac}&color=${color.r},${color.g},${color.b},${color.a}`
+                    `device/values?deviceId=${this.colorPicker.device.mac}&color=${color.r},${color.g},${color.b}&light=${color.a}`
                   )
                   .then(() => {});
               }, 50);
@@ -461,17 +461,29 @@ export default {
     },
     touchStart(event, item) {
       if (window.mobileAndTabletCheck() && !this.drag.item) {
-        this.animate(event.target,100)
-        this.drag.item = item
-        event.target.classList.toggle('active', true)
-        clearInterval(this.drag.interval)
-        this.drag.interval = setInterval(()=>{
-          TweenLite.to(event.target, 0.03, {
-            rotation: `3`,
-            yoyo: true,
-            repeat: 1,
-          });
-        },100)
+        this.animate(event.target, 100)
+        this.toggle.is_toggling = true;
+        this.toggle.time = new Date().getTime();
+        const interval = setInterval(() => {
+          if (this.toggle.is_toggling == false) clearInterval(interval);
+          if (this.toggle.time != 0) {
+            if (this.toggle.time + this.toggle.action_time < new Date().getTime()) {
+              this.toggle.is_toggling = false;
+              this.toggle.time = 0;
+              this.drag.item = item
+              this.drag.el = event.target
+              event.target.classList.toggle('active', true)
+              clearInterval(this.drag.interval)
+              this.drag.interval = setInterval(() => {
+                TweenLite.to(this.drag.el, 0.05, {
+                  rotation: `3`,
+                  yoyo: true,
+                  repeat: 1,
+                });
+              }, 100)
+            }
+          }
+        }, 30);
       }
     },
     touchEnd(event, item) {
@@ -487,7 +499,7 @@ export default {
             let newIndex = this.devices[index].index
             this.devices[index].index = item.index
             this.devices.map(c=>{
-              if(c != this.devices[index] && c.index == item.index){
+              if (c != this.devices[index] && c.index == item.index) {
                 c.index = newIndex
               }
               return c
@@ -497,32 +509,37 @@ export default {
           }
         }
         this.stopDrag()
+        this.toggle.is_toggling = false;
+        this.toggle.time = 0;
       }
     },
     touchMove(event, item) {
       if (window.mobileAndTabletCheck() && this.drag.item) {
         // event.target.style.top = `${event.changedTouches[0].pageY - event.target.offsetHeight / 2}px`
         // event.target.style.left = `${event.changedTouches[0].pageX - event.target.offsetWidth / 2}px`
-        gsap.to(event.target,{
-          top: event.changedTouches[0].pageY - event.target.offsetHeight / 2,
-          left: event.changedTouches[0].pageX - event.target.offsetWidth / 2,
+        gsap.to(this.drag.el, {
+          top: event.changedTouches[0].pageY - this.drag.el.offsetHeight / 2,
+          left: event.changedTouches[0].pageX - this.drag.el.offsetWidth / 2,
           duration: 0
         })
       }
     },
     mouseStart(event, item) {
       if (!window.mobileAndTabletCheck() && !this.drag.item) {
-        this.animate(event.target,100)
+        this.animate(event.target, 100)
+
+        console.log(event.target.classList.contains("device"))
         this.drag.item = item
-        event.target.classList.toggle('active', true)
+        this.drag.el = event.target
+        this.drag.el.classList.toggle('active', true)
         clearInterval(this.drag.interval)
-        this.drag.interval = setInterval(()=>{
-          TweenLite.to(event.target, 0.03, {
+        this.drag.interval = setInterval(() => {
+          TweenLite.to(this.drag.el, 0.05, {
             rotation: `3`,
             yoyo: true,
             repeat: 1,
           });
-        },100)
+        }, 150)
       }
     },
     mouseEnd(event, item) {
@@ -552,9 +569,9 @@ export default {
     },
     mouseMove(event, item) {
       if (!window.mobileAndTabletCheck() && this.drag.item) {
-        gsap.to(event.target, {
-          top: event.pageY - event.target.offsetHeight / 2,
-          left: event.pageX - event.target.offsetWidth / 2,
+        gsap.to(this.drag.el, {
+          top: event.pageY - this.drag.el.offsetHeight / 2,
+          left: event.pageX - this.drag.el.offsetWidth / 2,
           duration: 0
         })
       }
@@ -590,7 +607,7 @@ export default {
         let color = this.hexToRgb(event.target.value);
         this.$api
           .get(
-            `device/values?deviceId=${device.mac}&color=${color.r},${color.g},${color.b},${alpha}`
+            `device/values?deviceId=${device.mac}&color=${color.r},${color.g},${color.b}&light=${alpha}`
           )
           .then(() => {});
       } else {
@@ -608,7 +625,7 @@ export default {
         }, 260);
         this.$api
           .get(
-            `device/values?deviceId=${device.mac}&color=${color.r},${color.g},${color.b},${alpha}`
+            `device/values?deviceId=${device.mac}&color=${color.r},${color.g},${color.b}&light=${alpha}`
           )
           .then(() => {});
       }

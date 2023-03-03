@@ -10,7 +10,7 @@ const path = require('path');
 const db = require("./database");
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const port = process.env.NODE_ENV == 'production' ? 443 : 80;
+const port = process.env.NODE_ENV == 'production' ? 444 : 81;
 const ruid = require('express-ruid');
 const config = require('../config.json');
 const fileUpload = require('express-fileupload');
@@ -114,7 +114,7 @@ require('./peer')(peer)
 global.peer = peer
 try {
   server.listen(port, () => {
-    console.log(`Server started on: http${port == 443 ? 's' : ''}://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
+    console.log(`Server started on: http${port == 444 ? 's' : ''}://${config.DOMAIN} at ${new Date().toLocaleString('ru')}`)
     db.checkConnection()
     if(process.env.NODE_ENV == 'production'){
       let httpserver = http.createServer(app);
